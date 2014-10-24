@@ -1,0 +1,55 @@
+Generic fuzzer
+--------------
+
+The generic_fuzzer.py is, naturally, the generic command line fuzzer
+for Nightmare. It can be used to fuzz any application that:
+
+ * Does not fork and create sub-processes (that we want to inspect).
+ * Does not connect to server applications where the crash should be
+   catched instead of in the client application.
+
+For example, let's say that you want to fuzz the typical Unix antivirus
+"ClamAV". There are 2 tools: clamscan and clamdscan. The former is the
+independent analyser, the last one (clamdscan) is a tool that connects
+to a socket. This fuzzer would only be able to correctly fuzz the 1st
+of the tools.
+
+Once this is explained, we need to add a configuration directive for
+this antivirus we want to fuzz in either generic.cfg or in any .cfg file
+we want. The following is the currently in use configuration settings
+for ClamAV available in generic.cfg:
+
+#-----------------------------------------------------------------------
+# Configuration for ClamAV
+#-----------------------------------------------------------------------
+[ClamAV]
+# Command line to launch it
+command=/usr/bin/clamscan --quiet
+# Base tube name
+basetube=clamav
+# The tube the fuzzer will use to pull of samples 
+tube=%(basetube)s-samples
+# The tube the fuzzer will use to record crashes
+crash-tube=%(basetube)s-crash
+# Extension for the files to be fuzzed
+extension=.fil
+# Timeout for this fuzzer
+timeout=90
+# Environment
+environment=clamav-environment
+
+[clamav-environment]
+MALLOC_CHECK_=3
+
+Once we have configured our fuzzer in generic.cfg we can just run the
+fuzzer issuing a command like the following one:
+
+ $ cd $NIGHTMARE_DIR/fuzzers
+ $ python generic_fuzzer.py generic.cfg ClamAV
+
+And that's all! It will take care of launching the command and killing
+it if a time-out occurs as well as handling all the signals and storing
+in the database all of the crashing information, POCs, diffs, etc...
+
+---
+Copyright (c) 2013, 2014 Joxean Koret

@@ -1,0 +1,53 @@
+Architecture of nightmare
+-------------------------
+
+Nightmare is a fuzzing suite that was created, initially, to do a talk
+about fuzzing in an underground conference. This fuzzing suite is a 
+distributed fuzzing suite with central management, which means that:
+
+ * Clients can run any where.
+ * Management interface run only in one host.
+
+Components
+----------
+
+There are 5 main components in Nightmare:
+
+ * Beanstalkd: This is the queue server used in Nightmare. Connections
+   to the queue server are established by both client and server
+   processes.
+ * Database: The MySQL (currently) database server will be used to store
+   all the crash information (register values at crashing time, memory 
+   at crashing registers, signal received, etc...). Only the server 
+   processes (nfp_engine.py and nightmare_frontend.py) needs to connect
+   to the database.
+ * nfp_engine.py: This tool is the responsible of creating the mutated
+   samples for the projects enabled at that moment and storing back in
+   the database all the crashes. For this purpose it uses a serie of
+   beanstalk tubes to put samples and retrieve the crashes, if any.
+ * nightmare_fronted.py: This is the web.py application used to check
+   the results of the fuzzing sessions as well as to configure mutators,
+   projects, manage crashes, etc...
+ * Clients: The clients are the fuzzers. The client can be any tool that
+   connects to the appropriate tube to pull samples from and pushes back
+   crash information in the, again, appropriate tube.
+
+There are 2 generic clients with this version of Nightmare:
+
+ * generic_fuzzer.py
+ * generic_client_server.py
+
+The 1st one can be used in either Windows or Linux (as it was tested in
+both operating systems) and the last one is only for fuzzing client and
+server application under Unix/Linux.
+
+The clients, as explained before, can be deployed any where as long as
+they can connect to the port where the beanstalkd is listening for new
+connections.
+
+And this is the basic explaination of the architecture of Nightmare. If
+you have any question, drop an e-mail at joxeankoret AT yah00 DOT es or
+write me a message in twitter (@matalaz).
+
+---
+Copyright (c) 2013, 2014 Joxean Koret

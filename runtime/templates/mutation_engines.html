@@ -1,0 +1,86 @@
+$def with (rows)
+<html>
+<head>
+<link href="/static/nightmare.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<div align="center">
+<h1>Nightmare Fuzzing Project</h1>
+</div>
+<div id="vertmenu"> 
+<h1>Navigation</h1>
+<ul>
+<li><a href="/" tabindex="1">Index</a></li>
+<li><a href="/config" tabindex="2">Configuration</a></li>
+<li><a href="/projects" tabindex="4">Projects</a></li>
+<li><a href="/engines" tabindex="5">Mutation Engines</a></li>
+<li><a href="/project_engines" tabindex="6">Project Engines</a></li>
+<li><a href="/find_samples" tabindex="7">Samples</a></li>
+<li><a href="/results" tabindex="8">Results</a></li>
+<li><a href="/bugs" tabindex="9">Bugs</a></li>
+<li><a href="/statistics" tabindex="10">Statistics</a></li>
+<li><a href="/logout" tabindex="11">Logout</a></li>
+</ul>
+</div>
+<div id="content">
+<table border="0">
+<tr><td>
+<h2>Mutation engines</h2>
+<table border="1" id="data">
+  <tr>
+    <th>Action</th>
+    <th>Name</th>
+    <th>Description</th>
+    <th>Command</th>
+    <th>Enabled</th>
+    <th>Date</th>
+  </tr>
+  $for row in rows:
+    <tr>
+      <td align="center">
+        <a href="/edit_mutation_engine?id=$row.mutation_engine_id"><img src="/static/new-edit-find.png"></a>
+        <a href="/del_mutation_engine?id=$row.mutation_engine_id"><img src="/static/list-remove.png"></a>
+      </td>
+      <td>$row.name</td>
+      <td>$row.description</td>
+      <td>$row.command</td>
+      <td>$row.enabled</td>
+      <td>$row.date</td>
+    </tr>
+</table>
+</td></tr>
+<tr><td>
+<hr/>
+<h2>Add new mutation engine</h2>
+  <form action="/add_mutation_engine" method="POST">
+  <table>
+   <tr>
+    <td><label for="name">Name</label></td>
+    <td><input type="text" name="name" size="50"></td>
+    <td><i>Short name of the mutation engine.</i></td>
+   </tr>
+   <tr>
+    <td valign="top"><label for="description">Description</label></td>
+    <td><textarea rows="10" cols="50" name="description"></textarea></td>
+    <td valign="top"><i>Description of the mutation engine (how it works, if it preserves input size, algorithms used...)</i></td>
+   </tr>
+   <tr>
+    <td><label for="command">Command</label></td>
+    <td><input type="text" name="command" size="50"></td>
+    <td><i>Command to generate mutations. Use %INPUT% and %OUTPUT% to specify the input template file and the output mutated (fuzzed) file(s).
+           You can also use %NIGHTMARE_PATH% to automatically add the path where Nightmare Fuzzing Project is installed.</i></td>
+   </tr>
+   <tr>
+     <td colspan="2"><input type="submit" value="Add new mutation engine"></td>
+   </tr>
+  </table>
+  </form>
+
+</td></tr>
+</table>
+</div>
+<div align="center" id="footer">
+<h2>Copyright (c) 2013, 2014 Joxean Koret</h2>
+</div>
+</body>
+</html>

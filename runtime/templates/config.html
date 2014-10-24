@@ -1,0 +1,70 @@
+$def with (samples_path, templates_path, nightmare_path, queue_host, queue_port)
+<html>
+<head>
+<link href="/static/nightmare.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<div align="center">
+<h1>Nightmare Fuzzing Project</h1>
+</div>
+<div id="vertmenu"> 
+<h1>Navigation</h1>
+<ul>
+<li><a href="/" tabindex="1">Index</a></li>
+<li><a href="/config" tabindex="2">Configuration</a></li>
+<li><a href="/projects" tabindex="4">Projects</a></li>
+<li><a href="/engines" tabindex="5">Mutation Engines</a></li>
+<li><a href="/project_engines" tabindex="6">Project Engines</a></li>
+<li><a href="/find_samples" tabindex="7">Samples</a></li>
+<li><a href="/results" tabindex="8">Results</a></li>
+<li><a href="/bugs" tabindex="9">Bugs</a></li>
+<li><a href="/statistics" tabindex="10">Statistics</a></li>
+<li><a href="/logout" tabindex="11">Logout</a></li>
+</ul>
+</div>
+<div id="content">
+<table border="0">
+<tr><td>
+  <h2>Configuration</h2>
+  <form action="/config" method="POST">
+  <table>
+    <tr>
+      <td>Samples path:</td>
+      <td><input type="text" name="samples_path" value="$samples_path" size="50"/></td>
+      <td><i>Path where all the crashing samples will be stored for later analysis.</i></td>
+    </tr>
+    <tr>
+      <td>Templates path:</td>
+      <td><input type="text" name="templates_path" value="$templates_path" size="50"/></td>
+      <td><i>Path where template files, packets, etc... will be read from.</i></td>
+    </tr>
+    <tr>
+      <td>Nightmare path:</td>
+      <td><input type="text" name="nightmare_path" value="$nightmare_path" size="50"/></td>
+      <td><i>Path where Nightmare Fuzzing Project is installed.</i></td>
+    </tr>
+    <tr>
+      <td>Queue host:</td>
+      <td><input type="text" name="queue_host" value="$queue_host" size="50"/></td>
+      <td><i>Hostname or IP address of the (Beanstalk) queue server.</i></td>
+    </tr>
+    <tr>
+      <td>Queue port:</td>
+      <td><input type="number" name="queue_port" value="$queue_port" size="5"/></td>
+      <td><i>Port where the (Beanstalk) queue server is listening.</i></td>
+    </tr>
+    <tr>
+      <td colspan="2">
+      <input type="submit" value="Update"/>
+      </td>
+    </tr>
+  </table>
+  </form>
+</td></tr>
+</table>
+</div>
+<div align="center" id="footer">
+<h2>Copyright (c) 2013, 2014 Joxean Koret</h2>
+</div>
+</body>
+</html>

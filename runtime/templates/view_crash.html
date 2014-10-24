@@ -1,0 +1,161 @@
+$def with(project_name, crash_data, str, map, repr, b64)
+<html>
+<head>
+<link href="/static/nightmare.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<div align="center">
+<h1>Nightmare Fuzzing Project</h1>
+</div>
+<div id="vertmenu"> 
+<h1>Navigation</h1>
+<ul>
+<li><a href="/" tabindex="1">Index</a></li>
+<li><a href="/config" tabindex="2">Configuration</a></li>
+<li><a href="/projects" tabindex="4">Projects</a></li>
+<li><a href="/engines" tabindex="5">Mutation Engines</a></li>
+<li><a href="/project_engines" tabindex="6">Project Engines</a></li>
+<li><a href="/find_samples" tabindex="7">Samples</a></li>
+<li><a href="/results" tabindex="8">Results</a></li>
+<li><a href="/bugs" tabindex="9">Bugs</a></li>
+<li><a href="/statistics" tabindex="10">Statistics</a></li>
+<li><a href="/logout" tabindex="11">Logout</a></li>
+</ul>
+</div>
+<div id="content">
+<h2>Information for crash $crash_data["crash_id"]</h2>
+<h3>General</h3>
+<a href='/download_sample?id=$crash_data["sample_id"]'>Download sample</a>&nbsp;
+<a href='/download_sample?id=$crash_data["sample_id"]&diff=1'>Download diff</a>
+<table border="1" id="data">
+  <tr>
+    <th align="left">Project</th>
+    <td>$project_name</td>
+  </tr>
+  <tr>
+    <th align="left">Data</th>
+    <td>$crash_data["date"]</td>
+  </tr>
+  <tr>
+    <th align="left">Signal</th>
+    <td>$crash_data["crash_signal"]</td>
+  </tr>
+  <tr>
+    <th align="left">Exploitable?</th>
+    <td>$crash_data["exploitability"]</td>
+  </tr>
+  <tr>
+    <th align="left">Program Counter</th>
+    <td>$crash_data["program_counter"]</td>
+  </tr>
+  <tr>
+    <th align="left">Crash instruction</th>
+    <td>$crash_data["disassembly"]</td>
+  </tr>
+  <tr>
+    <th align="left">Process</th>
+    <td>PID: $crash_data["additional"]["process"]["pid"]</td>
+  </tr>
+  <tr>
+    <th align="left" valign="top">Registers</th>
+    <td>
+    <pre>
+    $for reg in crash_data["additional"]["registers"]:
+      $if reg.startswith("r") or reg == "eflags" or reg.startswith("e"):
+        $if crash_data["additional"].has_key("registers memory") and crash_data["additional"]["registers memory"].get(reg) is not None:
+          $str(reg.ljust(5)): $str("%08x"%crash_data["additional"]["registers"][reg]) $repr(b64(str(crash_data["additional"]["registers memory"].get(reg))))
+        $else:
+          $str(reg.ljust(5)): $str("%08x"%crash_data["additional"]["registers"][reg])
+    </pre>
+    </td>
+  </tr>
+  <tr>
+    <th align="left" valign="top">Stack trace</th>
+    <td>
+      <table border="1" id="data">
+        <tr>
+          <th>Address</th>
+          <th>Module</th>
+        </tr>
+        $for stack in crash_data["additional"]["stack trace"]:
+          <tr>
+            <td>$hex(crash_data["additional"]["stack trace"][stack][0])</td>
+            <td>$crash_data["additional"]["stack trace"][stack][1]</td>
+          </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <th valign="top" align="left">Disassembly</th>
+    <td>
+      <br/>
+      $if crash_data["additional"].has_key("disassembly") and len(crash_data["additional"]["disassembly"]) > 0:
+        $for dis in crash_data["additional"]["disassembly"]:
+          $if int(crash_data["program_counter"]) == int(dis):
+            <b>
+          $hex(int(dis)) $crash_data["additional"]["disassembly"][dis]
+          $if int(crash_data["program_counter"]) == int(dis):
+            &nbsp;&nbsp;&nbsp;&nbsp;&lt;---- CRASH </b>
+          <br/>
+      <pre>
+      </pre>
+    </td>
+  </tr>
+  <tr>
+    <th valign="top" align="left">Threads</th>
+    <td>
+      $for thread in crash_data["additional"]["threads"]:
+        $crash_data["additional"]["threads"][thread] <br/>
+    </td>
+  </tr>
+  <tr>
+    <th valign="top" align="left">Memory maps</th>
+    <td>
+      <table border="1" id="data">
+        <tr>
+          <th>Number</th>
+          <th>Address</th>
+          <th>Size</th>
+          <th>Privs</th>
+          <th>Name</th>
+        </tr>
+        $code:
+          keys = map(int, crash_data["additional"]["memory maps"].keys())
+          min_key = min(keys)
+          max_key = max(keys)
+
+        $for map in range(int(min_key), int(max_key)):
+          <tr>
+            <td>$map</td>
+            <td>$hex(crash_data["additional"]["memory maps"][str(map)][0])</td>
+            <td>$hex(crash_data["additional"]["memory maps"][str(map)][1])</td>
+            <td>
+            $code:
+              tmp_privs = crash_data["additional"]["memory maps"][str(map)][2]
+              if tmp_privs & 4:
+                str_privs = "r"
+              else:
+                str_privs = "-"
+              if tmp_privs & 2:
+                str_privs += "w"
+              else:
+                str_privs += "-"
+              if tmp_privs & 1:
+                str_privs += "x"
+              else:
+                str_privs += "-"
+            
+            $str_privs
+            </td>
+            <td>$crash_data["additional"]["memory maps"][str(map)][3]</td>
+          </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</div>
+<div align="center" id="footer">
+<h2>Copyright (c) 2013, 2014 Joxean Koret</h2>
+</div>
+</body>
+</html>

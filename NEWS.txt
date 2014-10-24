@@ -1,0 +1,21 @@
+Nightmare 0.0.4 - ?????????
+---------------------------
+
+ * Added option in the web interface to download project results (only one crash per different bug + corresponding diff file if any).
+ * Ported Nightmare to SQLite database. You can use either MySQL or SQLite now.
+ * Added mutator ole_file_mutator.py and ole_file_mutator_multiple.py to fuzz OLE2 documents (surprise) using OleFileIO_PL.
+
+Nightmare 0.0.3 - July 2014
+---------------------------
+
+ * Added generic_client_server.py fuzzer.
+ * Added support for minimizing crash files.
+ * Added blind_coverage_fuzzer.py fuzzer.
+ * Added mutator zzuf_mutator.py and zzuf_mutator_multiple.py.
+ * Added support to find the original template file for a crash file.
+ * Added a half intelligent MachO format aware mutator.
+ * The "Charlie Miller" mutators have been enhanced and now they are 
+   fast. Before, they were painfully slow.
+
+---
+Copyright (c) 2013, 2014 Joxean Koret

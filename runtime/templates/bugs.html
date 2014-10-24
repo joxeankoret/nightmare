@@ -1,0 +1,64 @@
+$def with (bugs)
+<html>
+<head>
+  <link href="/static/nightmare.css" rel="stylesheet" type="text/css">
+  <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+  <script type="text/javascript">
+    google.load("visualization", "1", {packages:["corechart"]});
+    google.setOnLoadCallback(drawChart);
+    function drawChart() {
+      /*
+      concat('0x???????', substr(conv(program_counter, 10, 16), length(conv(program_counter, 10, 16))-2)) address,
+      crash_signal, substr(disassembly, instr(disassembly, ' ')+1) dis, count(*) count
+      */
+      //----------------------------------------------------------------
+      // Different bugs found by pc, signal and disassembly at pc
+      var data = google.visualization.arrayToDataTable([
+          ['Name', 'value'],
+        $for row in bugs:
+          ['$row.address $row.crash_signal $row.dis', $row.count],
+        ]);
+
+      var options = {
+          title: 'Different bugs found by program counter, signal and disassembly at program counter'
+        };
+
+      var chart = new google.visualization.PieChart(document.getElementById('bugs_stats'));
+        chart.draw(data, options);
+
+    }
+  </script>
+</head>
+<body>
+<div align="center">
+<h1>Nightmare Fuzzing Project</h1>
+</div>
+<div id="vertmenu"> 
+<h1>Navigation</h1>
+<ul>
+<li><a href="/" tabindex="1">Index</a></li>
+<li><a href="/config" tabindex="2">Configuration</a></li>
+<li><a href="/projects" tabindex="4">Projects</a></li>
+<li><a href="/engines" tabindex="5">Mutation Engines</a></li>
+<li><a href="/project_engines" tabindex="6">Project Engines</a></li>
+<li><a href="/find_samples" tabindex="7">Samples</a></li>
+<li><a href="/results" tabindex="8">Results</a></li>
+<li><a href="/bugs" tabindex="9">Bugs</a></li>
+<li><a href="/statistics" tabindex="10">Statistics</a></li>
+<li><a href="/logout" tabindex="11">Logout</a></li>
+</ul>
+</div>
+<div id="content">
+<table border="0">
+<tr><td>
+<h2>Bugs found</h2>
+<h3>Total of $len(bugs) bug(s)</h3>
+<div id="bugs_stats" style="width: 900px; height: 500px;"></div>
+</td></tr>
+</table>
+</div>
+<div align="center" id="footer">
+<h2>Copyright (c) 2013, 2014 Joxean Koret</h2>
+</div>
+</body>
+</html>

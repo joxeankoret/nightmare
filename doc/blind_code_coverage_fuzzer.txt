@@ -1,0 +1,144 @@
+Blind Code Coverage Fuzzer (BCCF)
+---------------------------------
+
+This is a new addition to the Nightmare fuzzing suite. This tool tries
+to do one of the following 3 tasks:
+
+ * Maximize code coverage of one sample.
+ * Create new generations that can be used as templates for fuzzing
+   covering more features that then original template.
+ * Discover bugs by executing code not typically covered.
+ 
+It can be considered an evolutionary fuzzer.
+
+How it works
+------------
+
+This fuzzer takes as input some template file and tries to make changes
+here and there, randomly, in order to increase code coverage. The target
+application will run under instrumentation (currently using DynamoRIO)
+in order to be able to determine the total number of different basic 
+blocks that were executed in each run.
+
+Initially, before making mutations, it will meassure after a number of
+executions (10 by default) that maximum, minimum and average number of
+different basic blocks executed per each execution (as it may vary 
+depending on the target application) and then start making many random 
+modifications any where in the sample in order to maximize execution. By
+default, a maximum number of 10 generations (i.e., modifications that
+caused the application to execute more new basic blocks) will be saved
+in memory.
+
+A generic is dropped after a number of "failures". I mean, if a single
+modification makes it execute more basic blocks but after a number of
+added modifications the number of basic blocks is always the same or it
+drops to a bad number, the generation will be eventually dropped. If, on
+the other hand, a new change discover more new basic blocks, the current
+generation and statistics will be stored (in memory) and the last new
+generation will be considered the current generation.
+
+While this approach is not bullet proof, it certainly can:
+
+ * Discover new bugs.
+ * Maximize code coverage of a sample or set of samples in order to use
+   them as new templates for another mutator (like radamsa).
+
+Configuration
+-------------
+
+This is an experimental tool and, as such, there are so many little
+configuration directives and options. However, using the supplied .cfg
+file (bcf.cfg) starting with this fuzzer is easy. 
+
+For example, let's say that you want to fuzz the tool "readelf". We need
+to configure in bcf.cfg:
+
+ * The BCF tool section.
+ * The DynamoRIO section.
+ * The specific target section.
+
+For BCF and DynamoRIO the following options lines are all we need:
+
+#-----------------------------------------------------------------------
+# Configuration for the BCF fuzzer
+#-----------------------------------------------------------------------
+[BCF]
+templates-path=/home/joxean/Documentos/research/nightmare/samples/av
+# Use *ONLY* iterative algorithm instead of all algorithms?
+#iterative=1
+# Use *ONLY* radamsa instead of all the implemented algorithms?
+#radamsa=1
+
+#-----------------------------------------------------------------------
+# Configuration for DynamoRIO (requied for code coverage)
+#-----------------------------------------------------------------------
+[DynamoRIO]
+path=/home/joxean/devel/dynamorio/DynamoRIO-Linux-4.2.0-3/
+
+The options "iterative" and "radamsa" are completely uninteresting yet,
+so let's forget them for now. After those lines we will need to add the
+directive for the target application we want to fuzz, in our example
+case, "readelf". The following lines are what we need:
+
+#-----------------------------------------------------------------------
+# Configuration for "readelf" tool
+#-----------------------------------------------------------------------
+[readelf]
+# Command line to launch it
+command=/usr/bin/readelf -a
+# Base tube name
+basetube=readelf
+# The tube the fuzzer will use to pull of samples 
+tube=%(basetube)s-samples
+# The tube the fuzzer will use to record crashes
+crash-tube=%(basetube)s-crash
+# Extension for the files to be fuzzed
+extension=.fil
+# Timeout for this fuzzer
+timeout=15
+# Environment
+environment=common-environment
+current-state-file=current-state-readelf
+generation-bottom-level=-500
+hide-output=1
+skip-bytes=4
+non-uniques=True
+#iterative=1
+#radamsa=1
+
+[common-environment]
+MALLOC_CHECK_=2
+
+The options are either self-explanatory or already commented so I think
+there is no need to go through all of them with the only exception of
+the following ones:
+
+ * iterative: Use the iterative algorithm? The iterative algorithm will
+   make modifications byte-per-byte starting from the value "skip-bytes"
+   value.
+ * radamsa: Use only radamsa to make new generations?
+
+Both configuration directives can be set at either BCF level (global) or
+specific fuzzer level (the recommended setting).
+
+Once we have the BCF tool, DynamoRIO section and our specific target
+configuration section(s) already configured in our bcf.cfg file we need
+to simply run the following command:
+
+ $ cd $NIGHTMARE_DIR/fuzzers
+ $ bcf.py 32 bcf.cfg readelf inputtemplate output_dir
+
+The first argument given to bcf.py is the architecture: 32 for 32bits
+architectures (Intel x86) and 64 for 64bits (x86_64).
+
+As for the input template(s): this tool is can be considered "smart". We
+can feed to it an (almost) empty file and it will discover the relevant
+modifications required to execute more code and, hopefully, discover new
+bugs. For example, given a 1024 bytes file filled with 0x00 characters
+and only with the typical "\x1FELF" header, the tool will manage to
+create files that will make to crash "readelf" or, at the very least,
+that will execute more code (new different basic blocks) in the target
+application.
+
+---
+Copyright (c) 2013, 2014 Joxean Koret

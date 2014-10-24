@@ -1,0 +1,24 @@
+$def with(id)
+<html>
+<head>
+<link href="/static/nightmare.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<div align="center">
+<h1>Nightmare Fuzzing Project</h1>
+<h2>Delete project</h2>
+  <table>
+    <form action="/del_project" method="POST">
+      <input type="hidden" name="id" value="$id"/>
+      <tr><td>Are you sure that you want to delete the project?</td></tr>
+      <tr><td>I'm sure <input type="checkbox" name="sure"/></td></tr>
+      <tr><td><input type="submit" value="Delete project"/></td></tr>
+    </form>
+  <table>
+</table>
+</div>
+<div align="center" id="footer">
+<h2>Copyright (c) 2013, 2014 Joxean Koret</h2>
+</div>
+</body>
+</html>

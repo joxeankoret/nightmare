@@ -1,0 +1,38 @@
+Generic minimizer
+-----------------
+
+The generic minimizer is the Nightmare own's tool to minimize crashing
+POC files in order to discover the root change or changes that caused 
+the target application to crash.
+
+The command line options of this tool are the following:
+
+$ ./generic_minimizer.py 
+Usage: ./generic_minimizer.py <config file> <section> <template file> <crashing file> <diff file> <output directory>
+
+First, as it's common with all tools from Nightmare, we need a config
+file (typically, generic.cfg, the one used by the tool generic_fuzzer)
+in order for the minimizer to know what command must be issued, the 
+section where all the configuration settings for the target application
+were specified, a crash POC file (downloaded from the Nightmare web app)
+and also the original template file the mutated one was created from and
+the .diff file created among with the mutated file[1] and, also, the
+directory to store the resulting minimized crashing file.
+
+That is, there is nothing else special we have to do in order to
+minimize the POC file. However, please take into account that this tool
+can take very long for highly mutated files.
+
+This tool works specially well with the "Charlie Miller" mutator.
+
+Notes
+-----
+
+[1] Not all mutators create a .diff file unfortunately, so, not all the
+    mutated files can be minimized with this tool. This is a known "bug"
+    in the current version. In next versions, this tool will be enhanced
+    to accept arbitrarily modified files without even requiring a diff
+    file, just the template and the mutated file.
+
+---
+Copyright (c) 2013, 2014 Joxean Koret

@@ -1,0 +1,105 @@
+/*
+Nightmare Fuzzing Projeft CSS
+Created on Sat May 18 2013
+@author: joxean
+*/
+h1 {
+  display: block; 
+  background-color:#FF9900;
+  padding: 3px 0 5px 3px;
+  color: #333333;
+}
+
+#vertmenu {
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+  font-size: 100%;
+  width: 160px;
+  padding: 0px;
+  margin: 0px;
+  float: left;
+  position: relative;
+  left: 0%;
+  margin-right: 10;
+  margin-bottom: 10;
+}
+
+#vertmenu h1 {
+  display: block; 
+  background-color:#FF9900;
+  font-size: 90%; 
+  padding: 3px 0 5px 3px;
+  border: 1px solid #000000;
+  color: #333333;
+  margin: 0px;
+  width:159px;
+}
+
+#vertmenu ul {
+  list-style: none;
+  margin: 0px;
+  padding: 0px;
+  border: none;
+}
+#vertmenu ul li {
+  margin: 0px;
+  padding: 0px;
+}
+#vertmenu ul li a {
+  font-size: 80%;
+  display: block;
+  border-bottom: 1px dashed #C39C4E;
+  padding: 5px 0px 2px 4px;
+  text-decoration: none;
+  color: #666666;
+  width:160px;
+}
+
+#vertmenu ul li a:hover, #vertmenu ul li a:focus {
+  color: #000000;
+  background-color: #eeeeee;
+}
+
+#content {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#footer {
+  font-size:70%;
+  clear: both;
+  position: relative;
+  z-index: 10;
+  height: 3em;
+}
+
+#footer h2 {
+  display: block; 
+  background-color:#FF9900;
+  padding: 3px 0 5px 3px;
+  color: #333333;
+}
+
+#data {
+  border-collapse:collapse;
+}
+
+#data th {
+  background-color:#FF9900;
+}
+
+#data tr:nth-child(even) {
+  background-color:white;
+}
+
+#data tr:nth-child(odd) {
+  background-color:#FFFFCC;
+}
+
+#hextable {
+  border-collapse:collapse;
+}
+
+#hextable th {
+  background-color:#FF9900;
+}

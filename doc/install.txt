@@ -1,0 +1,207 @@
+Nightmare 0.0.4
+---------------
+
+01 Download, build and install diStorm64. Install the Python bindings,
+   you will need them. The version used for this project can be found
+   here: 
+   
+    https://code.google.com/p/pyew/downloads/detail?name=distorm64-pkg1.7.30.zip&can=2&q=#makechanges
+
+02 Create the schema in a MySQL or SQLite database using either the 
+   script sql/nightmare.sql or sql/nightmare_sqlite.sql. You  will need
+   to modify some paths for the configuration settings in the table
+   CONFIG for SAMPLES_PATH, TEMPLATES_PATH and NIGHTMARE_PATH. The
+   meaning of each configuration directive is shown below:
+   
+   TEMPLATES_PATH: Base path to find samples from. Sub-directories must be
+   created for each file format or target and only the sub-directory
+   must be selected from the web interface when performing a fuzzing
+   session.
+   
+   SAMPLES_PATH: Path to store the temporary created files and all the
+   resulting files, namely, proof of concept crashes and diff files.
+   
+   NIGHTMARE_PATH: The base path where Nightmare is installed.
+   
+   NOTE: In the future I'll likely create an installer to make things
+   a bit easier.
+   NOTE2: Currently, the web application expects the database name to be
+   "nightmare" and that a user "fuzzing" with password "fuzzing" was
+   created. Also, it expects the database to be listening at localhost.
+   You can change it by modifying the file:
+   
+    $NIGHTMARE_PATH/runtime/config.py.
+
+03 Install beanstalkd and configure it (you can use the recommended file
+   in doc/beanstalkd.recommended). Install beanstalkc (Python bindings
+   for Beanstalk) and Python YAML. You can download Python YAML using
+   your favourite package application. To install beanstalkc go to this
+   URL: 
+   
+    https://github.com/earl/beanstalkc/
+   
+04 Install radamsa (put it somewhere in your $PATH). You can download it
+   from here:
+   
+    https://ouspg.googlecode.com/files/radamsa-0.3.tar.gz
+   
+   The following (optional) packages can be instaled:
+
+    DynamoRIO
+    Zzuf
+    Python macholib
+    Python OleFileIO_PL (provided)
+  
+   Some fuzzers uses them, but they're not vital components.
+
+05 Go to $INSTALL_DIR/runtime and execute a command like the following:
+
+    $ python nightmare_frontend.py
+
+06 Open the URL showed after running this command, configure under
+   "Configuration" everything (queues, directories, etc...) and create a
+   new project in "Projects". The following are the directives you need
+   to configure under the "Configuration" menu:
+   
+   Samples path: Same as SAMPLES_PATH (see section #2).
+   Templates path: Same as TEMPLATES_PATH (see section #2).
+   Nightmare path: Same as NIGHTMARE_PATH (see section #2).
+   Queue host: Hostname or IP address of the host where beanstalk is
+   listening for connections.
+   Queue port: Port where the beanstalkd daemon is listening for new
+   connections.
+   
+   NOTE: If your database is not listening at "localhost" you will need
+   to modify in the file $NIGHTMARE_PATH/runtime/config.py the following lines:
+
+# Database hostname or IP address
+DB_HOST="localhost"
+# Database name
+DB_NAME="nightmare"
+# Database username
+DB_USER="fuzzing"
+# Database password
+DB_PASS="fuzzing"
+
+   NOTE2: If your database is not MySQL you will need to configure it to
+   use SQLite. Comment everything in $DIR/runtime/config.cfg and add a
+   section similar to the following one:
+   
+########################################################################
+# Example configuration for SQLite3
+########################################################################
+[database]
+dbn=sqlite
+# Database name
+db=/home/your/path/to/nightmare/db.sqlite
+
+07 The default username and password for the web app are the following:
+   
+   Username: admin
+   Password: tarakogayer
+   
+   If you want to change them you will need to modify the file:
+   
+   $NIGHTMARE_PATH/runtime/config.py
+   
+   The following (self explanatory) lines are the ones you need to
+   modify:
+   
+(...)
+# Administrator username
+NFP_USER="admin"
+# Administrator password (SHA1 hash, default is 'tarakogayer')
+NFP_PASS="8d5b3795207f559b7da536f0401f91d10f726802"
+(...)
+
+   PS: Please don't ask why is this the default password. Trolling.
+
+08 Create a new fuzzer. You can very probably just add a new entry in
+   the file $INSTALL_DIR/fuzzers/generic.cfg. For example, if you want
+   to fuzz the command line application "file" you need to add a section
+   like the following one:
+
+#-----------------------------------------------------------------------
+# Configuration for "file" command
+#-----------------------------------------------------------------------
+[file]
+# Command line to launch it
+command=/usr/bin/file
+# Base tube name
+basetube=file
+# The tube the fuzzer will use to pull of samples 
+tube=%(basetube)s-samples
+# The tube the fuzzer will use to record crashes
+crash-tube=%(basetube)s-crash
+# Extension for the files to be fuzzed
+extension=.fil
+# Timeout for this fuzzer
+timeout=60
+# Environment
+environment=file-env
+
+[file-env]
+MALLOC_CHECK_=2
+
+09 Run your fuzzer and wait for gold! If you're using generic_fuzzer.py
+   (i.e., by adding a new entry in generic.cfg) you can run your fuzzer
+   with a line like:
+
+    $ cd $INSTALL_DIR
+    $ cd fuzzer
+    $ python generic_fuzzer.py generic.cfg FuzzerNameInGenericCfg
+
+10 If you want to fuzz a client/server Linux application you will need
+   to use the "generic_client_server.py" fuzzer. It works pretty much 
+   like generic_fuzzer.py but needs different configuration settings.
+   For example, if you want to fuzz the Avast for Linux server you will
+   need the following directive:
+
+#-----------------------------------------------------------------------
+# Configuration for Avast server version
+#-----------------------------------------------------------------------
+[AvastServer]
+# Command line to launch clients
+client-command=/bin/scan -a -p -f
+# UID and GID for the client processes
+client-uid=1000
+client-gid=1000
+# Command line to spawn the server
+command=/bin/avast -n
+# UID and GID for the server process
+server-uid=0
+server-gid=0
+# Command to run before starting up the server process
+pre-command=killall -9 avast
+# Base tube name
+basetube=avast
+# The tube the fuzzer will use to pull of samples 
+tube=%(basetube)s-samples
+# The tube the fuzzer will use to record crashes
+crash-tube=%(basetube)s-crash
+# Extension for the files to be fuzzed
+extension=.fil
+# Timeout for this fuzzer (restart every 1 month...)
+timeout=25920000
+
+11 In order to run this fuzzer you will need to execute the following
+   command line:
+   
+    $ sudo python generic_client_server.py generic.cfg AvastServer
+
+12 While there is no specific fuzzer client for Windows, the fuzzer 
+   generic_fuzzer.py should work as it was used for testing some apps
+   some months ago. If it doesn't work, please do let me know as I'm 
+   thinking about adding a new debugging interface focusing in *good*
+   Windows support. VTrace is buggy as hell.
+
+13 Finally, go to $INSTALL_DIR/runtime again and run a command like the
+   following:
+
+    $ python nfp_engine.py
+
+14 Wait for it to find bugs for you! You can check the results in your
+   favourite browser.
+
+---
+Copyright (c) 2013, 2014 Joxean Koret

@@ -1,0 +1,141 @@
+$def with (sample_stats, exploitables, signals, disassemblies, bugs, tube_stats)
+<html>
+<head>
+  <link href="/static/nightmare.css" rel="stylesheet" type="text/css">
+  <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+  <script type="text/javascript">
+    google.load("visualization", "1", {packages:["corechart"]});
+    google.setOnLoadCallback(drawChart);
+    function drawChart() {
+      //----------------------------------------------------------------
+      // Project-samples statistics
+      var data = google.visualization.arrayToDataTable([
+        ['Project', 'Samples', 'Crashes'],
+      $for row in sample_stats:
+        ['$row.name', $row.total_samples, $row.crashes],
+      ]);
+
+      var options = {
+        title: 'Project samples',
+        hAxis: {title: 'Project', titleTextStyle: {color: 'red'}}
+      };
+
+      var chart = new google.visualization.ColumnChart(document.getElementById('samples_stats'));
+      chart.draw(data, options);
+
+      //----------------------------------------------------------------
+      // Exploitability stats      
+      var data = google.visualization.arrayToDataTable([
+          ['Name', 'value'],
+        $for row in exploitables:
+          ['$row.exploitability', $row.count],
+        ]);
+
+      var options = {
+          title: 'Exploitability statistics'
+        };
+
+      var chart = new google.visualization.PieChart(document.getElementById('exploitability_stats'));
+        chart.draw(data, options);
+
+      //----------------------------------------------------------------
+      // Different signals stats      
+      var data = google.visualization.arrayToDataTable([
+          ['Name', 'value'],
+        $for row in signals:
+          ['$row.crash_signal', $row.count],
+        ]);
+
+      var options = {
+          title: 'Different signals received'
+        };
+
+      var chart = new google.visualization.PieChart(document.getElementById('signal_stats'));
+        chart.draw(data, options);
+
+      //----------------------------------------------------------------
+      // Different disassemblies at program counter stats
+      var data = google.visualization.arrayToDataTable([
+          ['Name', 'value'],
+        $for row in disassemblies:
+          ['$row.dis', $row.count],
+        ]);
+
+      var options = {
+          title: 'Different disassemblies at program counter'
+        };
+
+      var chart = new google.visualization.PieChart(document.getElementById('disasm_stats'));
+        chart.draw(data, options);
+
+      //----------------------------------------------------------------
+      // Different bugs found by pc, signal and disassembly at pc
+      var data = google.visualization.arrayToDataTable([
+          ['Name', 'value'],
+        $for row in bugs:
+          ['$row.address $row.crash_signal $row.dis', $row.count],
+        ]);
+
+      var options = {
+          title: 'Different bugs found by program counter, signal and disassembly at program counter'
+        };
+
+      var chart = new google.visualization.PieChart(document.getElementById('bugs_stats'));
+        chart.draw(data, options);
+
+      //----------------------------------------------------------------
+      // Tubes statistics
+      var data = google.visualization.arrayToDataTable([
+        ['Tube', 'Jobs'],
+      $for row in tube_stats:
+        ['$row', $tube_stats[row]],
+      ]);
+
+      var options = {
+        title: 'Queue statistics',
+        hAxis: {title: 'Queue statistics', titleTextStyle: {color: 'red'}}
+      };
+
+      var chart = new google.visualization.ColumnChart(document.getElementById('tubes_stats'));
+      chart.draw(data, options);
+
+    }
+  </script>
+</head>
+<body>
+<div align="center">
+<h1>Nightmare Fuzzing Project</h1>
+</div>
+<div id="vertmenu"> 
+<h1>Navigation</h1>
+<ul>
+<li><a href="/" tabindex="1">Index</a></li>
+<li><a href="/config" tabindex="2">Configuration</a></li>
+<li><a href="/projects" tabindex="4">Projects</a></li>
+<li><a href="/engines" tabindex="5">Mutation Engines</a></li>
+<li><a href="/project_engines" tabindex="6">Project Engines</a></li>
+<li><a href="/find_samples" tabindex="7">Samples</a></li>
+<li><a href="/results" tabindex="8">Results</a></li>
+<li><a href="/bugs" tabindex="9">Bugs</a></li>
+<li><a href="/statistics" tabindex="10">Statistics</a></li>
+<li><a href="/logout" tabindex="11">Logout</a></li>
+</ul>
+</div>
+<div id="content">
+<table border="0">
+<tr><td>
+<h2>Fuzzing Statistics</h2>
+<div id="samples_stats" style="width: 900px; height: 500px;"></div>
+<div id="exploitability_stats" style="width: 900px; height: 500px;"></div>
+<div id="signal_stats" style="width: 900px; height: 500px;"></div>
+<div id="disasm_stats" style="width: 900px; height: 500px;"></div>
+<div id="bugs_stats" style="width: 900px; height: 500px;"></div>
+<div id="tubes_stats" style="width: 900px; height: 500px;"></div>
+</td></tr>
+</table>
+</div>
+<div align="center" id="footer">
+<h2>Copyright (c) 2013, 2014 Joxean Koret</h2>
+</div>
+</body>
+</html>

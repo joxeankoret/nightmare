@@ -1,0 +1,122 @@
+$def with (rows, show_all)
+<html>
+<head>
+<link href="/static/nightmare.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<div align="center">
+<h1>Nightmare Fuzzing Project</h1>
+</div>
+<div id="vertmenu"> 
+<h1>Navigation</h1>
+<ul>
+<li><a href="/" tabindex="1">Index</a></li>
+<li><a href="/config" tabindex="2">Configuration</a></li>
+<li><a href="/projects" tabindex="4">Projects</a></li>
+<li><a href="/engines" tabindex="5">Mutation Engines</a></li>
+<li><a href="/project_engines" tabindex="6">Project Engines</a></li>
+<li><a href="/find_samples" tabindex="7">Samples</a></li>
+<li><a href="/results" tabindex="8">Results</a></li>
+<li><a href="/bugs" tabindex="9">Bugs</a></li>
+<li><a href="/statistics" tabindex="10">Statistics</a></li>
+<li><a href="/logout" tabindex="11">Logout</a></li>
+</ul>
+</div>
+<div id="content">
+<table border="0">
+<tr><td>
+<h2>Projects</h2>
+<table border="1" id="data">
+  <tr>
+    <th>Action</th>
+    <th>Name</th>
+    <th>Description</th>
+    <th>Subfolder</th>
+    <th>Tube prefix</th>
+    <th>Max. samples</th>
+    <th>Enabled</th>
+    <th>Archived</th>
+    <th>Start date</th>
+  </tr>
+  $ i = 0
+  $for row in rows:
+    $if show_all == 0 and i == 10:
+      $ left = len(rows) - i
+        <tr>
+          <td colspan="9" align="center">
+            $left project(s) hidden... <a href="?show_all=1">Show all projects</a>.
+          </td>
+        </tr>
+        $break
+    <tr>
+      <td align="center">
+        <a href="/edit_project?id=$row.project_id"><img src="/static/new-edit-find.png"></a>
+        <a href="/del_project?id=$row.project_id"><img src="/static/list-remove.png"></a>
+        <a href="/download_project?id=$row.project_id"><img src="/static/download.png" title="Download project results"></a>
+      </td>
+      <td>$row.name</td>
+      <td>$row.description</td>
+      <td>$row.subfolder</td>
+      <td>$row.tube_prefix</td>
+      <td>$row.maximum_samples</td>
+      <td>
+      $if row.enabled == 1:
+        Yes
+      $else:
+        No
+      </td>
+      <td>
+      $if row.archived == 1:
+        Yes
+      $else:
+        No
+      </td>
+      <td>$row.date</td>
+    </tr>
+    $ i += 1
+</table>
+</td></tr>
+<tr><td>
+<hr/>
+<h2>Add new project</h2>
+  <form action="/add_project" method="POST">
+  <table>
+   <tr>
+    <td><label for="name">Name</label></td>
+    <td><input type="text" name="name" size="50"></td>
+    <td><i>Short name of the new project.</i></td>
+   </tr>
+   <tr>
+    <td valign="top"><label for="description">Description</label></td>
+    <td><textarea rows="10" cols="50" name="description"></textarea></td>
+    <td valign="top"><i>Description of the project. Use this field to specify the version, operating systems, CPU, etc...</i></td>
+   </tr>
+   <tr>
+    <td><label for="subfolder">Subfolder</label></td>
+    <td><input type="text" name="subfolder"></td>
+    <td><i>Subfolder to store template files, network packets, etc...</i></td>
+   </tr>
+   <tr>
+    <td><label for="tube_prefix">Tube prefix</label></td>
+    <td><input type="text" name="tube_prefix"></td>
+    <td><i>Prefix for the queue tubes to be used.</i></td>
+   </tr>
+   <tr>
+    <td><label for="max_files">Maximum samples</label></td>
+    <td><input type="number" name="max_files" value=""></td>
+    <td><i>Maximum number of samples per tube. If the queue is full the daemon will wait until the number decreases before pushing more samples.</i></td> 
+   </tr>
+   <tr>
+     <td colspan="2"><input type="submit" value="Add new project"></td>
+   </tr>
+  </table>
+  </form>
+
+</td></tr>
+</table>
+</div>
+<div align="center" id="footer">
+<h2>Copyright (c) 2013, 2014 Joxean Koret</h2>
+</div>
+</body>
+</html>

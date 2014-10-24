@@ -1,0 +1,17 @@
+Nigtmare
+--------
+
+ [ ] Crash verifier.
+ [ ] Specific sample from a set finder.
+ [ ] Valgrind runner.
+ [ ] Exploitability checker.
+ [/] Test case reduction.
+  [ ] Test case reduction for highly changed files.
+  [ ] Build diff files for binary patches.
+  [ ] Improve nfp_min.py to handle such diff files.
+ [ ] Integrate 'bcf' with the queues system.
+  [ ] Providing maximized versions of the files?
+  [ ] Use it for generating maximized files.
+  [ ] Generate nice genetic graphs with this tool.
+ [ ] Mutators
+  [ ] A "chunkenizer" for binary data.

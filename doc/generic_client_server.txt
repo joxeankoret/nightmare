@@ -1,0 +1,50 @@
+Generic client/server fuzzer
+----------------------------
+
+This fuzzer was created with the idea of fuzzing client/server Unix
+applications. In order to use this fuzzing it must be created a new
+section in the generic.cfg configuration file (or any other *.cfg file)
+similar to the following (highly commented) one:
+
+#-----------------------------------------------------------------------
+# Configuration for Avast server version
+#-----------------------------------------------------------------------
+[AvastServer]
+# Command line to launch clients
+client-command=/bin/scan -a -p -f
+# UID and GID for the client processes
+client-uid=1000
+client-gid=1000
+# Command line to spawn the server
+command=/bin/avast -n
+# UID and GID for the server process
+server-uid=0
+server-gid=0
+# Command to run before starting up the server process
+pre-command=killall -9 avast
+# Base tube name
+basetube=avast
+# The tube the fuzzer will use to pull of samples 
+tube=%(basetube)s-samples
+# The tube the fuzzer will use to record crashes
+crash-tube=%(basetube)s-crash
+# Extension for the files to be fuzzed
+extension=.fil
+# Timeout for this fuzzer (every month...)
+timeout=25920000
+
+Once a fuzzer section similar to the previous one is added, the fuzzer
+can be executed issuing a command like the following one:
+
+ $ python generic_client_server.py file.cfg SectionName
+
+For example, in order to run the Avast client/server fuzzer:
+
+ $ python generic_client_server.py generic.cfg AvastServer
+
+And that's all! It will take care of spawning the client and server
+processes as well as catching signals and storing in the database all
+the relevant crashing information, diff files, POCs, etc...
+
+---
+Copyright (c) 2013, 2014 Joxean Koret
