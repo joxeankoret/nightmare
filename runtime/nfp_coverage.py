@@ -97,9 +97,9 @@ class CPinCoverage:
 
   def coverage(self, command, timeout=36000, hide_output = True):
     tool_path=self.path+"/source/tools/RunTracer"
-    if self.arch==32:
+    if int(self.arch)==32:
       tool_path=tool_path+"/obj-ia32/ccovtrace.so"
-    elif self.arch==64:
+    elif int(self.arch)==64:
       tool_path=tool_path+"/obj-intel64/ccovtrace.so"
 
     logfile = mkstemp()[1]
@@ -125,6 +125,8 @@ class CPinCoverage:
     for i in range(times):
       ret.append(self.coverage(command, timeout))
     return ret
+
+BININST_AVAILABLE_TOOLS={"DynamoRIO":CDynRioCoverage,"Pin":CPinCoverage}
 
 #-----------------------------------------------------------------------
 def usage():

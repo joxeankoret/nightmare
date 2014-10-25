@@ -28,12 +28,12 @@ tmp_path = os.path.join(tmp_path, "runtime")
 sys.path.append(tmp_path)
 
 from nfp_log import log, debug
-from nfp_coverage import CDynRioCoverage
+from nfp_coverage import BININST_AVAILABLE_TOOLS
 from nfp_process import RETURN_SIGNALS
 
 #-----------------------------------------------------------------------
 BININST_TOOL = "DynamoRIO"
-BININST_AVAILABLE_TOOLS = [BININST_TOOL] # For the future...
+
 
 #-----------------------------------------------------------------------
 class CBlindCoverageFuzzer:
@@ -231,7 +231,7 @@ class CBlindCoverageFuzzer:
       self.non_uniques = False
 
   def record_metric(self, input_file, l):
-    cov_tool = CDynRioCoverage(self.bininst_path, self.arch)
+    cov_tool = BININST_AVAILABLE_TOOLS[BININST_TOOL](self.bininst_path, self.arch)
     if input_file.find(" ") and not input_file.startswith('"'):
       input_file = '"%s"' % input_file
 
