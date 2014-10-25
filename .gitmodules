@@ -4,3 +4,6 @@
 [submodule "dependencies/radamsa"]
 	path = dependencies/radamsa
 	url = https://github.com/aoh/radamsa.git
+[submodule "dependencies/RunTracer"]
+	path = dependencies/RunTracer
+	url = https://github.com/v-p-b/RunTracer.git
