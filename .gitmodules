@@ -1,0 +1,6 @@
+[submodule "dependencies/beanstalkc"]
+	path = dependencies/beanstalkc
+	url = https://github.com/earl/beanstalkc.git
+[submodule "dependencies/radamsa"]
+	path = dependencies/radamsa
+	url = https://github.com/aoh/radamsa.git
