@@ -16,7 +16,7 @@ How it works
 
 This fuzzer takes as input some template file and tries to make changes
 here and there, randomly, in order to increase code coverage. The target
-application will run under instrumentation (currently using DynamoRIO)
+application will run under instrumentation 
 in order to be able to determine the total number of different basic 
 blocks that were executed in each run.
 
@@ -64,6 +64,8 @@ For BCF and DynamoRIO the following options lines are all we need:
 #-----------------------------------------------------------------------
 [BCF]
 templates-path=/home/joxean/Documentos/research/nightmare/samples/av
+# Current options are: DynamoRIO, Pin
+bininst-tool=DynamoRIO
 # Use *ONLY* iterative algorithm instead of all algorithms?
 #iterative=1
 # Use *ONLY* radamsa instead of all the implemented algorithms?
@@ -139,6 +141,50 @@ and only with the typical "\x1FELF" header, the tool will manage to
 create files that will make to crash "readelf" or, at the very least,
 that will execute more code (new different basic blocks) in the target
 application.
+
+Other binary instrumentation backends
+-------------------------------------
+
+The tool was originally developed with DynamoRIO but Pin was also added 
+as an experimental instrumentation backend. The example of Pin shows 
+how other backends can be added.
+
+First of all, you should download Pin:
+
+  https://software.intel.com/en-us/articles/pin-a-dynamic-binary-instrumentation-tool
+
+To use Pin for BCF you should grab the RunTracer pintool that is 
+included in the dependencies/ directory as a Git submodule. You can issue
+the following command to grab it:
+
+  $ git submodule update
+
+After downloading you should copy the RunTracer directory under your 
+%PINROOT%/source/tools/ and compile with the included Makefile. Pin 
+requires the following kernel option to be set:
+
+  # echo 0 > /proc/sys/kernel/yama/ptrace_scope
+
+After everything works as expected you should configure your fuzzer to
+work with Pin in bcf.cnf:
+
+  [BCF]
+  templates-path=/home/joxean/Documentos/research/nightmare/samples/av
+  # Current options are: DynamoRIO, Pin
+  bininst-tool=Pin
+  
+  [Pin]
+  path=/home/b/tools/pin/
+
+As you can see you should set the bininst-tool parameter in the BCF
+section to 'Pin' (case sensitive, no quotes) and also have to define a new 
+section called 'Pin' and a 'path' parameter pointing to your Pin 
+installation.
+
+Pin backend is handled by the CPinCoverage class declared in the
+runtime/nfp_coverage.py file. It is registered with the name 'Pin' in 
+the BININST_AVAILABLE_TOOLS dictionary - this is not the best solution 
+but probably good enough for now. 
 
 ---
 Copyright (c) 2013, 2014 Joxean Koret
