@@ -5,7 +5,7 @@ import os
 import sys
 import shutil
 
-from tempfile import mkdtemp
+from tempfile import mkdtemp,mkstemp
 
 from nfp_log import debug
 from nfp_process import TimeoutCommand
@@ -79,19 +79,75 @@ class CDynRioCoverage:
       ret.append(self.coverage(command, timeout))
     return ret
 
+class CPinCoverage:
+  def __init__(self, path, arch):
+    self.path = path
+    self.arch = arch
+
+  def read_coverage_log(self, logfile, maximum=1):
+    bbs = 0
+    s = set()
+    with open(logfile,"rb") as f:
+      lines=f.readlines()
+      bbs=len(lines)-1
+      for line in lines:
+        line_parts=line.split("\t")
+        s.add(line_parts[0])
+    return bbs, len(s)
+
+  def coverage(self, command, timeout=36000, hide_output = True):
+    tool_path=self.path+"/source/tools/RunTracer"
+    if self.arch==32:
+      tool_path=tool_path+"/obj-ia32/ccovtrace.so"
+    elif self.arch==64:
+      tool_path=tool_path+"/obj-intel64/ccovtrace.so"
+
+    logfile = mkstemp()[1]
+    cmdline = "%s/pin -t %s -o %s -- %s"
+    if hide_output:
+      cmdline += " >/dev/null 2>/dev/null"
+    cmdline = cmdline % (self.path, tool_path, logfile, command)
+    
+    debug("Running command %s" % cmdline)
+    cmd = TimeoutCommand(cmdline)
+    ret = cmd.run(timeout)
+    coverage = self.read_coverage_log(logfile)
+    debug("Removing temporary file %s " % logfile)
+    os.remove(logfile)
+
+    debug("Returning coverage data...")
+    cover = CCoverResults(coverage[0], coverage[1], ret)
+    return cover
+
+  def multi_coverage(self, command, times, timeout=36000):
+    ret = []
+    debug("Performing coverage %d time(s)" % times)
+    for i in range(times):
+      ret.append(self.coverage(command, timeout))
+    return ret
+
 #-----------------------------------------------------------------------
 def usage():
   print "Usage:", sys.argv[0], "program and arguments"
 
 #-----------------------------------------------------------------------
 def main(args):
-  bininst_path = "/home/joxean/devel/dynamorio/DynamoRIO-Linux-4.2.0-3/"
-  arch = 32
-
+  bininst_path = "/home/b/tools/DynamoRIO-Linux-4.2.0-3"
+  arch = 64
+  
   cmd_line = " ".join(args)
   cov_tool = CDynRioCoverage(bininst_path, arch)
   cov_data = cov_tool.coverage(cmd_line, 3600)
   print cov_data
+
+  bininst_path = "/home/b/projects/domdodom/domdodom_fuzzer/pin"
+  arch = 64
+
+  cmd_line = " ".join(args)
+  cov_tool = CPinCoverage(bininst_path, arch)
+  cov_data = cov_tool.coverage(cmd_line, 3600)
+  print cov_data
+
 
 if __name__ == "__main__":
   if len(sys.argv) == 1:
