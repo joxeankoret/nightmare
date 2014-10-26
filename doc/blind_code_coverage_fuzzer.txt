@@ -157,6 +157,7 @@ To use Pin for BCF you should grab the RunTracer pintool that is
 included in the dependencies/ directory as a Git submodule. You can issue
 the following command to grab it:
 
+  $ git submodule init
   $ git submodule update
 
 After downloading you should copy the RunTracer directory under your 
