@@ -103,7 +103,7 @@ class CPinCoverage:
       tool_path=tool_path+"/obj-intel64/ccovtrace.so"
 
     logfile = mkstemp()[1]
-    cmdline = "%s/pin -t %s -o %s -- %s"
+    cmdline = "%s/pin.sh -t %s -o %s -- %s"
     if hide_output:
       cmdline += " >/dev/null 2>/dev/null"
     cmdline = cmdline % (self.path, tool_path, logfile, command)
