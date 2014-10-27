@@ -79,6 +79,7 @@ class CDynRioCoverage:
       ret.append(self.coverage(command, timeout))
     return ret
 
+#-----------------------------------------------------------------------
 class CPinCoverage:
   def __init__(self, path, arch):
     self.path = path
@@ -87,24 +88,27 @@ class CPinCoverage:
   def read_coverage_log(self, logfile, maximum=1):
     bbs = 0
     s = set()
-    with open(logfile,"rb") as f:
-      lines=f.readlines()
-      bbs=len(lines)-1
+    with open(logfile, "rb") as f:
+      lines = f.readlines()
+      bbs = len(lines) - 1
       for line in lines:
-        line_parts=line.split("\t")
+        line_parts = line.split("\t")
         s.add(line_parts[0])
     return bbs, len(s)
 
   def coverage(self, command, timeout=36000, hide_output = True):
-    tool_path=self.path+"/source/tools/RunTracer"
-    if int(self.arch)==32:
-      tool_path=tool_path+"/obj-ia32/ccovtrace.so"
-    elif int(self.arch)==64:
-      tool_path=tool_path+"/obj-intel64/ccovtrace.so"
+    tool_path = self.path+"/source/tools/RunTracer"
+    if int(self.arch) == 32:
+      tool_path = tool_path + "/obj-ia32/ccovtrace.so"
+    elif int(self.arch) == 64:
+      tool_path = tool_path + "/obj-intel64/ccovtrace.so"
 
     logfile = mkstemp()[1]
+    # XXX: Do we want to use the .sh script? Using this we're limiting
+    # ourselves to only Linux and MacOSX.
     cmdline = "%s/pin.sh -t %s -o %s -- %s"
     if hide_output:
+      # ...although, when using "hide_output", we're already doing it...
       cmdline += " >/dev/null 2>/dev/null"
     cmdline = cmdline % (self.path, tool_path, logfile, command)
     
@@ -126,6 +130,7 @@ class CPinCoverage:
       ret.append(self.coverage(command, timeout))
     return ret
 
+#-----------------------------------------------------------------------
 BININST_AVAILABLE_TOOLS={"DynamoRIO":CDynRioCoverage,"Pin":CPinCoverage}
 
 #-----------------------------------------------------------------------
