@@ -28,12 +28,8 @@ tmp_path = os.path.join(tmp_path, "runtime")
 sys.path.append(tmp_path)
 
 from nfp_log import log, debug
-from nfp_coverage import CDynRioCoverage
+from nfp_coverage import BININST_AVAILABLE_TOOLS
 from nfp_process import RETURN_SIGNALS
-
-#-----------------------------------------------------------------------
-BININST_TOOL = "DynamoRIO"
-BININST_AVAILABLE_TOOLS = [BININST_TOOL] # For the future...
 
 #-----------------------------------------------------------------------
 class CBlindCoverageFuzzer:
@@ -45,6 +41,7 @@ class CBlindCoverageFuzzer:
     self.cfg = cfg
     self.section = section
     self.metrics = 10
+    self.bininst_tool=None
 
     self.mgr = Manager()
     self.stats = self.mgr.dict()
@@ -99,8 +96,8 @@ class CBlindCoverageFuzzer:
         the config file instead of adding a gazilion command line
         options. """
     section = "BCF"
-    if "BCF" not in parser.sections():
-      raise Exception("Binary instrumentation toolkit section %s does not exists in the given configuration file" % BININST_TOOL)
+    if section not in parser.sections():
+      raise Exception("Binary instrumentation toolkit section %s does not exists in the given configuration file" % section)
 
     try:
       self.templates_path = parser.get("BCF", 'templates-path')
@@ -109,12 +106,18 @@ class CBlindCoverageFuzzer:
       self.templates_path = None
 
   def read_bininst_configuration(self, parser):
+    try:
+      self.bininst_tool = parser.get("BCF", 'bininst-tool')
+      debug("Binary instrumentation tool configured to %s" % self.bininst_tool)
+    except:
+      raise Exception("Binary instrumentation toolkit parameter bininst-tool does not exists in the given configuration file")
+
     """ Read the "binary instrumentation toolkit" configuration. """
-    if BININST_TOOL not in parser.sections():
-      raise Exception("Binary instrumentation toolkit section %s does not exists in the given configuration file" % BININST_TOOL)
+    if self.bininst_tool not in parser.sections():
+      raise Exception("Binary instrumentation toolkit section %s does not exists in the given configuration file" % self.bininst_tool)
 
     try:
-      self.bininst_path = parser.get(BININST_TOOL, 'path')
+      self.bininst_path = parser.get(self.bininst_tool, 'path')
     except:
       raise Exception("No binary instrumentation toolkit path specified in the configuration file")
 
@@ -231,7 +234,7 @@ class CBlindCoverageFuzzer:
       self.non_uniques = False
 
   def record_metric(self, input_file, l):
-    cov_tool = CDynRioCoverage(self.bininst_path, self.arch)
+    cov_tool = BININST_AVAILABLE_TOOLS[self.bininst_tool](self.bininst_path, self.arch)
     if input_file.find(" ") and not input_file.startswith('"'):
       input_file = '"%s"' % input_file
 

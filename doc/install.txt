@@ -5,7 +5,7 @@ Nightmare 0.0.4
    you will need them. The version used for this project can be found
    here: 
    
-    https://code.google.com/p/pyew/downloads/detail?name=distorm64-pkg1.7.30.zip&can=2&q=#makechanges
+    https://pyew.googlecode.com/files/distorm64-pkg1.7.30.zip
 
 02 Create the schema in a MySQL or SQLite database using either the 
    script sql/nightmare.sql or sql/nightmare_sqlite.sql. You  will need
