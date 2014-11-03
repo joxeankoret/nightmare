@@ -26,7 +26,12 @@ class CMultipleOleFileMutator:
       fuzz_zip.comment = "NIGHTMARE"
       i = 0
       
+      max_tries = self.total*2
+      tries = 0
       while i < self.total:
+        tries += 1
+        if tries > max_tries:
+          break
         name = tempfile.mktemp()
         while 1:
           template = random.choice(os.listdir(self.samples_path))
