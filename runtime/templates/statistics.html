@@ -10,9 +10,9 @@ $def with (sample_stats, exploitables, signals, disassemblies, bugs, tube_stats)
       //----------------------------------------------------------------
       // Project-samples statistics
       var data = google.visualization.arrayToDataTable([
-        ['Project', 'Samples', 'Crashes'],
+        ['Project', 'Samples', 'Iteration', 'Crashes'],
       $for row in sample_stats:
-        ['$row.name', $row.total_samples, $row.crashes],
+        ['$row.name', $row.total_samples, $row.iteration, $row.crashes],
       ]);
 
       var options = {

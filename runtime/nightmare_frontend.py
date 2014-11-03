@@ -242,7 +242,8 @@ class add_project:
       f = register_form()
       return render.login(f)
     
-    i = web.input(name="", description="", subfolder="", tube_prefix="", max_files=100)
+    i = web.input(name="", description="", subfolder="", tube_prefix="",
+                  max_files=100, max_iteration=1000000)
     if i.name == "":
       return render.error("No project name specified")
     elif i.description == "":
@@ -255,6 +256,7 @@ class add_project:
       db.insert("projects", name=i.name, description=i.description,
               subfolder=i.subfolder, tube_prefix=i.tube_prefix, 
               maximum_samples=i.max_files, archived=0,
+              maximum_iteration=self.max_iteration,
               date=web.SQLLiteral("CURRENT_DATE"))
 
     return web.redirect("/projects")
@@ -293,6 +295,7 @@ class edit_project:
       db.update("projects", name=i.name, description=i.description, 
                 subfolder=i.subfolder, tube_prefix=i.tube_prefix,
                 maximum_samples=i.max_files, enabled=enabled,
+                maximum_iteration=i.max_iteration,
                 archived=archived, where="project_id = $project_id",
                 vars={"project_id":i.id})
     return web.redirect("/projects")
@@ -307,7 +310,8 @@ class edit_project:
     
     db = init_web_db()
     what = """project_id, name, description, subfolder, tube_prefix,
-              maximum_samples, enabled, date, archived"""
+              maximum_samples, enabled, date, archived,
+              maximum_iteration """
     where = "project_id = $project_id"
     vars = {"project_id":i.id}
     res = db.select("projects", what=what, where=where, vars=vars)
@@ -667,7 +671,13 @@ class statistics:
                          where c.sample_id = s.sample_id
                            and project_id = p.project_id
                          group by project_id
-                     ), 0) crashes
+                     ), 0) crashes,
+                     (
+                      select iteration
+                        from statistics st
+                       where st.project_id = p.project_id
+                         and st.mutation_engine_id = -1
+                     ) iteration
                 from statistics s,
                      projects p,
                      mutation_engines m

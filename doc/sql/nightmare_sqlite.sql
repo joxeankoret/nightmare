@@ -61,6 +61,7 @@ CREATE TABLE `projects` (
   `subfolder` varchar(255) DEFAULT NULL,
   `tube_prefix` varchar(50) DEFAULT NULL,
   `maximum_samples` int(11) NOT NULL DEFAULT '100',
+  `maximum_iteration` int(11) NOT NULL DEFAULT '1000000',
   `enabled` tinyint(1) DEFAULT '1',
   `archived` tinyint(1) DEFAULT '1'
 );
@@ -76,6 +77,7 @@ CREATE TABLE `statistics` (
   `project_id` int(11) NOT NULL,
   `mutation_engine_id` int(11) NOT NULL,
   `total` int(11) NOT NULL DEFAULT '0',
+  `iteration` int(11) NOT NULL DEFAULT '0',
   `last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE TABLE `config` (

@@ -34,6 +34,7 @@ $def with (rows, show_all)
     <th>Subfolder</th>
     <th>Tube prefix</th>
     <th>Max. samples</th>
+    <th>Max. iterations</th>
     <th>Enabled</th>
     <th>Archived</th>
     <th>Start date</th>
@@ -43,7 +44,7 @@ $def with (rows, show_all)
     $if show_all == 0 and i == 10:
       $ left = len(rows) - i
         <tr>
-          <td colspan="9" align="center">
+          <td colspan="10" align="center">
             $left project(s) hidden... <a href="?show_all=1">Show all projects</a>.
           </td>
         </tr>
@@ -59,6 +60,7 @@ $def with (rows, show_all)
       <td>$row.subfolder</td>
       <td>$row.tube_prefix</td>
       <td>$row.maximum_samples</td>
+      <td>$row.maximum_iteration</td>
       <td>
       $if row.enabled == 1:
         Yes
@@ -105,6 +107,11 @@ $def with (rows, show_all)
     <td><label for="max_files">Maximum samples</label></td>
     <td><input type="number" name="max_files" value=""></td>
     <td><i>Maximum number of samples per tube. If the queue is full the daemon will wait until the number decreases before pushing more samples.</i></td> 
+   </tr>
+   <tr>
+    <td><label for="max_iteration">Maximum iteration</label></td>
+    <td><input type="number" name="max_iteration" value=""></td>
+    <td><i>Maximum number of iterations per project. No more samples will be generated when the number of maximum iterations (without crashes) is reached.</i></td>
    </tr>
    <tr>
      <td colspan="2"><input type="submit" value="Add new project"></td>

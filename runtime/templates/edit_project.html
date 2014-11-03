@@ -36,6 +36,11 @@ $def with(row)
     <td><i>Maximum number of samples per tube. If the queue is full the daemon will wait until the number decrease before pushing more samples.</i></td> 
    </tr>
    <tr>
+    <td><label for="max_iteration">Maximum samples</label></td>
+    <td><input type="number" name="max_iteration" value="$row.maximum_iteration"></td>
+    <td><i>Maximum number of iterations per project. No more samples will be generated when the number of maximum iterations (without crashes) is reached.</i></td>
+   </tr>
+   <tr>
     <td><label for="enabled">Enabled?</label></td>
     $if row.enabled == 1:
       <td><input type="checkbox" name="enabled" checked></td>
