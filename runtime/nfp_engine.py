@@ -231,6 +231,13 @@ class CSamplesGenerator:
                      exploitability=data["exploitable"],
                      disassembly=disasm, total_samples=total, 
                      additional = str(additional_info))
+      
+      self.reset_iteration(project_id)
+  
+  def reset_iteration(self, project_id):
+    vars = {"project_id":project_id}
+    where = "project_id = $project_id and mutation_engine_id = -1"
+    self.db.update("statistics", iteration=0, where=where, vars=vars)
 
   def find_crashes(self):
     what = "project_id, tube_prefix"
