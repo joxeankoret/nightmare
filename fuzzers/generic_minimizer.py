@@ -161,9 +161,12 @@ class CGenericMinimizer:
     for i in range(len(self.diff)):
       for pos in self.diff:
         if start_at <= iteration:
-          log("Minimizing, iteration %d..." % iteration)
+          log("Minimizing, iteration %d (Max. %d)..." % (iteration, (len(self.diff)) * len(self.diff)))
           temp_file = tempfile.mktemp()
           buf = bytearray(self.template)
+          if pos not in self.crash:
+            continue
+          
           buf[pos] = self.crash[pos]
 
           with open(temp_file, "wb") as f:
@@ -197,8 +200,9 @@ class CGenericMinimizer:
           break
 
       value = self.diff.pop()
-      self.template[value] = self.crash[value]
-      del self.crash[value]
+      if value in self.crash:
+        self.template[value] = self.crash[value]
+        del self.crash[value]
 
     if not minimized:
       log("Sorry, could not minimize crashing file!")
