@@ -256,7 +256,7 @@ class add_project:
       db.insert("projects", name=i.name, description=i.description,
               subfolder=i.subfolder, tube_prefix=i.tube_prefix, 
               maximum_samples=i.max_files, archived=0,
-              maximum_iteration=self.max_iteration,
+              maximum_iteration=i.max_iteration,
               date=web.SQLLiteral("CURRENT_DATE"))
 
     return web.redirect("/projects")
