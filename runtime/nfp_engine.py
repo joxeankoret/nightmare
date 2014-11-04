@@ -64,10 +64,10 @@ class CSamplesGenerator:
                              where p.project_id = pe.project_id
                                and me.mutation_engine_id = pe.mutation_engine_id
                                and p.enabled = 1
-                               and (select iteration
+                               and ifnull((select iteration
                                       from statistics s
                                      where project_id = p.project_id
-                                       and mutation_engine_id = -1) < p.maximum_iteration
+                                       and mutation_engine_id = -1), 0) < p.maximum_iteration
                              order by rand()""")
     return res
 

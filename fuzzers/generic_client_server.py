@@ -98,25 +98,18 @@ class CClientServerFuzzer(CGenericFuzzer):
     for i in range(0,3):
       try:
         crash = self.launch_debugger(self.timeout, self.command, "")
-        print "SERVER", 1
         break
       except:
         log("Exception: %s" % sys.exc_info()[1])
-        raise
         continue
 
-    print "SERVER", 2
     if self.post_command is not None:
       os.system(self.post_command)
 
-    print "SERVER", 3, crash
     if crash is not None:
-      print "SERVER, CRASH", crash
       self.crash_info = crash
       shared_queue.put(crash)
-      print "SERVER, PUT"
       return True
-    print "SERVER", 4, "AGUR?"
     return False
 
   def launch_client(self, shared_queue):
@@ -135,22 +128,20 @@ class CClientServerFuzzer(CGenericFuzzer):
     job = self.q.reserve()
     buf, temp_file = json.loads(job.body)
     buf = base64.b64decode(buf)
-    debug("Launching sample %s..." % os.path.basename(temp_file))
+    log("Launching sample %s..." % os.path.basename(temp_file))
 
     cmd = "%s %s" % (self.client_command, temp_file)
     ret = os.system(cmd)
+    crash_info = None
     try:
       crash_info = shared_queue.get(timeout=1)
-      print "AT CLIENT", crash_info
     except:
-      print "AT CLIENT, except", sys.exc_info()[1]
       crash_info = None
 
-    print "AT CLIENT, before check?", shared_queue
-    if not shared_queue.empty():
+    if crash_info is not None:
       log("We have a crash, moving to %s queue..." % self.crash_tube)
-      crash = self.crash_info
-      d = {temp_file:self.crash_info}
+      crash = crash_info
+      d = {temp_file:crash_info}
       self.crash_q.put(json.dumps(d))
       self.crash_info = None
 
@@ -175,7 +166,7 @@ class CClientServerFuzzer(CGenericFuzzer):
       log("Launching server with command %s" % self.command)
       self.p = Process(target=self.debug_server, args=(self.shared_queue,))
       self.p.start()
-      self.p.join(5)
+      self.p.join(10)
 
       while self.p.is_alive():
         log("Running client")
@@ -185,7 +176,6 @@ class CClientServerFuzzer(CGenericFuzzer):
 
       if self.crash_info is not None:
         log("Server crashed, yuppie!")
-        print self.crash_info
       else:
         log("Server exited...")
 
