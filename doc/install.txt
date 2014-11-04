@@ -43,6 +43,10 @@ Nightmare 0.0.4
    
     https://github.com/earl/beanstalkc/
    
+   You can download the server, beanstalkd, from the following URL:
+   
+    http://kr.github.io/beanstalkd/
+   
 04 Install radamsa (put it somewhere in your $PATH). You can download it
    from here:
    
