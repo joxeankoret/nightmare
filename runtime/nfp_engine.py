@@ -48,6 +48,10 @@ class CSamplesGenerator:
     for row in res:
       self.config[row.name] = row.value
       log("Configuration value %s is %s" % (row.name, row.value))
+    
+    # Create the corresponding directory if it doesn't exists
+    if not os.path.exists(self.config["SAMPLES_PATH"]):
+      os.makedirs(self.config["SAMPLES_PATH"])
 
   def get_project_engines(self):
     res = self.db.query(""" select p.name project_name,
@@ -182,7 +186,6 @@ class CSamplesGenerator:
       job = q.reserve()
       if job.body.find(".") > -1 or job.body.find("/") > -1:
         raise Exception("Invalid filename %s" % job.body)
-
       sample_file = os.path.join(self.config["SAMPLES_PATH"], job.body)
       log("Deleting sample file %s" % sample_file)
 
