@@ -242,8 +242,8 @@ def main(args):
     print
 
     total_around = 40
-    if 'rip' in regs:
-      if len("%08x" % regs['rip']) > 8:
+    if 'rip' in regs or 'rsp' in regs or 'rbp' in regs:
+      if len("%08x" % regs['rip']) > 8 or len("%08x" % regs['rsp']) > 8 or len("%08x" % regs['rbp']) > 8:
         mode = CS_MODE_64
       else:
         mode = CS_MODE_32

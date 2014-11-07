@@ -9,5 +9,5 @@
 	url = https://github.com/v-p-b/RunTracer.git
 [submodule "dependencies/capstone"]
 	path = dependencies/capstone
-	url = https://github.com/aquynh/capstone.git
+	url = https://github.com/aquynh/capstone
 
