@@ -10,6 +10,7 @@ import os
 import sys
 import base64
 import threading
+from capstone import *
 
 sys.path.append("../")
 sys.path.append("../lib")
@@ -18,18 +19,6 @@ sys.path.append("../lib/interfaces")
 from crash_data import CCrashData
 
 from vtrace import vtrace
-
-# Yeah, this is horrible
-try:
-  from pydistorm import Decode, Decode32Bits, Decode64Bits
-except ImportError:
-  try:
-    from distorm import Decode, Decode32Bits, Decode64Bits
-  except ImportError:
-    try:
-      from distorm3 import Decode, Decode32Bits, Decode64Bits
-    except ImportError:
-      raise Exception("No diStorm64 version available, cannot continue, sorry!")
 
 # Default timeout
 timeout = 90
@@ -255,28 +244,32 @@ def main(args):
     total_around = 40
     if 'rip' in regs:
       if len("%08x" % regs['rip']) > 8:
-        decoder = Decode64Bits
+        mode = CS_MODE_64
       else:
-        decoder = Decode32Bits
+        mode = CS_MODE_32
     else:
-      decoder = Decode32Bits
+      mode = CS_MODE_32
 
+    md = Cs(CS_ARCH_X86, mode)
+    md.skipdata = True
     pc = tr.getProgramCounter()
-    pc_line = None
+    crash_mnem = None
+    crash_ops = None
     try:
       pc_mem = tr.readMemory(pc-total_around/2, total_around)
       offset = regs["rip"]-total_around/2
 
       ret = []
       found = False
-      for x in Decode(0, pc_mem, decoder):
-        line = "%016x %s" % ((offset + x.offset), str(x))
-        crash_data.add_data("disassembly", offset + x.offset, str(x))
-        if offset + x.offset == pc:
-          crash_data.disasm = [x.offset + offset, str(x)]
+      for x in md.disasm(pc_mem, 0):
+        line = "%016x %s %s" % ((offset + x.address), x.mnemonic, x.op_str)
+        crash_data.add_data("disassembly", offset + x.address, "%s %s" %(x.mnemonic, x.op_str))
+        if offset + x.address == pc:
+          crash_data.disasm = [x.address + offset, "%s %s" %(x.mnemonic, x.op_str)]
           line += "\t\t<--------- CRASH"
           print line
-          pc_line = x
+          crash_mnem = x.mnemonic
+          crash_ops = x.op_str
           found = True
         ret.append(line)
       if found:
@@ -285,11 +278,12 @@ def main(args):
       else:
         offset = pc = tr.getProgramCounter()
         pc_mem = tr.readMemory(pc, total_around)
-        for x in Decode(0, pc_mem, decoder):
-          line = "%016x %s" % ((offset + x.offset), str(x))
-          if offset + x.offset == pc:
+        for x in md.disasm(pc_mem, 0):
+          line = "%016x %s %s" % ((offset + x.address), x.mnemonic, x.op_str)
+          if offset + x.address == pc:
             line += "\t\t<--------- CRASH"
-            pc_line = x
+            crash_mnem = x.mnemonic
+            crash_ops = x.op_str
           print line
     except:
       # Due to invalid memory at $PC
@@ -298,23 +292,23 @@ def main(args):
         exploitability_reason = "Invalid memory at program counter"
       print "Exception:", sys.exc_info()[1]
 
-    if pc_line:
-      if str(pc_line.mnemonic) in ["CALL", "JMP"] or \
-         str(pc_line.mnemonic).startswith("JMP") or \
-         str(pc_line.mnemonic).startswith("CALL"):
-        if str(pc_line.operands).find("[") > -1:
+    if crash_mnem:
+      if crash_mnem in ["call", "jmp"] or \
+         crash_mnem.startswith("jmp") or \
+         crash_mnem.startswith("call"):
+        if crash_ops.find("[") > -1:
           # Due to jump/call with a register that maybe controllable
           exploitable = EXPLOITABLE
           exploitability_reason = "Jump or call with a probably controllable register"
-      elif str(pc_line.mnemonic).startswith("DB "):
+      elif crash_mnem.startswith(".byte"):
         # Due to illegal instruction
         exploitable = MAYBE_EXPLOITABLE
         exploitability_reason = "Illegal instruction"
-      elif str(pc_line.mnemonic).startswith("IN") or \
-           str(pc_line.mnemonic).startswith("OUT") or \
-           str(pc_line.mnemonic) in ["HLT", "IRET", "CLTS", "LGDT", "LIDT",
-                                     "LLDT", "LMSW", "LTR", "CLI", "STI"]:
-        if str(pc_line.mnemonic) != "INT":
+      elif crash_mnem.startswith("in") or \
+           crash_mnem.startswith("out") or \
+           crash_mnem in ["hlt", "iret", "clts", "lgdt", "lidt",
+                                     "lldt", "lmsw", "ltr", "cli", "sti"]:
+        if crash_mnem != "int":
           # Due to privileged instruction (which makes no sense in user-land)
           exploitable = MAYBE_EXPLOITABLE
           exploitability_reason = "Privileged instruction"
