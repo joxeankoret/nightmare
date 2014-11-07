@@ -292,8 +292,8 @@ class CSamplesGenerator:
 #-----------------------------------------------------------------------
 def do_generate():
   try:
-      gen = CSamplesGenerator()
-      gen.generate()
+    gen = CSamplesGenerator()
+    gen.generate()
   except:
     print "Error:", sys.exc_info()[1]
     raise
