@@ -4,8 +4,8 @@
 
 # Administrator username
 NFP_USER="admin"
-# Administrator password (SHA1 hash, default is 'tarakogayer')
-NFP_PASS="8d5b3795207f559b7da536f0401f91d10f726802"
+# Administrator password (SHA1 hash, default is 'nightmare')
+NFP_PASS="0ffa932690225172d291718510fd8a31b44d5698"
 
 # Beanstalk queue host
 QUEUE_HOST="localhost"
