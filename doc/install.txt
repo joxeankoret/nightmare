@@ -1,14 +1,13 @@
 Nightmare 0.0.4
 ---------------
 
-01 Download, build and install diStorm64. Install the Python bindings,
-   you will need them. The version used for this project can be found
-   here: 
+01 Download, build and install Capstone. Find the latest stable version
+   of this disassembly engine at:
    
-    https://pyew.googlecode.com/files/distorm64-pkg1.7.30.zip
+    http://www.capstone-engine.org
     
-   NOTE: In the short future, diStorm will be completely replaced with
-   Capstone.
+   NOTE: You need to install both the core of Capstone and its Python
+   binding for Nightmare to work.
 
 02 Create the schema in a MySQL or SQLite database using either the 
    script sql/nightmare.sql or sql/nightmare_sqlite.sql. You  will need
