@@ -1,3 +1,11 @@
+Nightmare 0.0.5 - November 2014
+-------------------------------
+
+ * Lots of bug fixes here and there.
+ * Added the "maximum iteration" option for projects. This value is used as the maximum number of samples to be created *without finding any bug* until the project is considered finished.
+ * Replaced diStorm64 with Capstone.
+ * Added PIN support for BCCF (and nfp_coverage.py in general). Thanks to v-p-b!
+
 Nightmare 0.0.4 - ?????????
 ---------------------------
 
@@ -14,8 +22,7 @@ Nightmare 0.0.3 - July 2014
  * Added mutator zzuf_mutator.py and zzuf_mutator_multiple.py.
  * Added support to find the original template file for a crash file.
  * Added a half intelligent MachO format aware mutator.
- * The "Charlie Miller" mutators have been enhanced and now they are 
-   fast. Before, they were painfully slow.
+ * The "Charlie Miller" mutators have been enhanced and now they are fast. Before, they were painfully slow.
 
 ---
 Copyright (c) 2013, 2014 Joxean Koret
