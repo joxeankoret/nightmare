@@ -137,7 +137,6 @@ class CGenericFuzzer:
         break
       except:
         log("Exception: %s" % sys.exc_info()[1])
-        raise
         continue
 
     if self.post_command is not None:
