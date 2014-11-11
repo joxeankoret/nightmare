@@ -268,22 +268,17 @@ def main(args):
           crash_data.disasm = [x.address + offset, "%s %s" %(x.mnemonic, x.op_str)]
           line += "\t\t<--------- CRASH"
           print line
-          crash_mnem = x.mnemonic
-          crash_ops = x.op_str
           found = True
         ret.append(line)
-      if found:
-        #print "\n".join(ret)
-        pass
-      else:
+
+      if not found:
         offset = pc = tr.getProgramCounter()
         pc_mem = tr.readMemory(pc, total_around)
         for x in md.disasm(pc_mem, 0):
           line = "%016x %s %s" % ((offset + x.address), x.mnemonic, x.op_str)
           if offset + x.address == pc:
             line += "\t\t<--------- CRASH"
-            crash_mnem = x.mnemonic
-            crash_ops = x.op_str
+            crash_data.disasm = [x.address + offset, "%s %s" % (x.mnemonic, x.op_str)]
           print line
     except:
       # Due to invalid memory at $PC
