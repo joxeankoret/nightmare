@@ -30,22 +30,25 @@ def process_manager(total_procs, target, args, wait_time=0.2):
      waiting for each thread to finish @wait_time second(s). """
   procs = []
   debug("Maximum number of processes in pool is %d" % total_procs)
-  while 1:
-    if len(procs) < total_procs:
-      debug("Starting process %d" % (len(procs)+1))
-      p = Process(target=target, args=args)
-      p.start()
-      procs.append(p)
-      debug("Total of %d process(es) started" % len(procs))
-    else:
-      i = 0
-      for p in list(procs):
-        p.join(wait_time)
-        if not p.is_alive():
-          debug("Process finished, deleting and starting a new one...")
-          del procs[i]
-          continue
-        i += 1
+  try:
+    while 1:
+      if len(procs) < total_procs:
+        debug("Starting process %d" % (len(procs)+1))
+        p = Process(target=target, args=args)
+        p.start()
+        procs.append(p)
+        debug("Total of %d process(es) started" % len(procs))
+      else:
+        i = 0
+        for p in list(procs):
+          p.join(wait_time)
+          if not p.is_alive():
+            debug("Process finished, deleting and starting a new one...")
+            del procs[i]
+            continue
+          i += 1
+  except KeyboardInterrupt:
+    pass
 
 #-----------------------------------------------------------------------
 class TimeoutCommand(object):
@@ -80,3 +83,15 @@ class TimeoutCommand(object):
     if ret is not None and ret < 0:
       ret = abs(ret) + 128
     return ret
+
+#-----------------------------------------------------------------------
+def do_nothing():
+  try:
+    import time
+    print time.asctime()
+    time.sleep(1)
+  except KeyboardInterrupt:
+    print "Aborted."
+
+if __name__ == "__main__":
+  process_manager(2, do_nothing, [], 1)

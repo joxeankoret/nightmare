@@ -184,8 +184,10 @@ def do_fuzz(cfg, section):
   try:
     fuzzer = CGenericFuzzer(cfg, section)
     fuzzer.fuzz()
+  except KeyboardInterrupt:
+    log("Aborted")
   except:
-    print "Error:", sys.exc_info()[1]
+    log("Error: %s" % str(sys.exc_info()[1]))
 
 #-----------------------------------------------------------------------
 def main(cfg, section):

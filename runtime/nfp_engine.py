@@ -294,9 +294,12 @@ def do_generate():
   try:
     gen = CSamplesGenerator()
     gen.generate()
+  except KeyboardInterrupt:
+    log("Aborted")
   except:
     print "Error:", sys.exc_info()[1]
-    raise
+    # Uncomment it for debugging purposes, not for the release
+    #raise
 
 #-----------------------------------------------------------------------
 def main():
