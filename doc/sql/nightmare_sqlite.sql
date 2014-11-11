@@ -47,7 +47,8 @@ INSERT INTO "mutation_engines" VALUES(10,'Zzuf multiple','This is a wrapper usin
 INSERT INTO "mutation_engines" VALUES(11,'MachO mutator','Half intelligent MachO fuzzer. It only supports a few fields for some headers but, anyway, it should be enough to discover some bugs.','%NIGHTMARE_PATH%/mutators/macho_mutator.py %INPUT% %OUTPUT%',1,'2014-06-29');
 INSERT INTO "mutation_engines" VALUES(12, 'OLE2 Mutator', 'OLE2 streams mutator. It uses the Python library OleFileIO_PL from https://bitbucket.org/decalage/olefileio_pl.', '%NIGHTMARE_PATH%/mutators/ole_file_mutator.py %INPUT% %OUTPUT%', 1, '2014-08-07');
 INSERT INTO "mutation_engines" VALUES(13, 'OLE2 mutator multiple', 'Same as OLE2 mutator but creating a bundle with many (10) files inside.', '%NIGHTMARE_PATH%/mutators/ole_file_mutator_multiple.py %TEMPLATES_PATH%/%FOLDER% 10 %OUTPUT%', 1, '2014-08-07');
-
+insert into "mutation_engines" values (14, 'Melkor mutator', 'Melkor is a very intuitive and easy-to-use ELF file format fuzzer to find functional and security bugs in ELF parsers.' , '%NIGHTMARE_PATH%/mutators/melkor_mutator.py %TEMPLATES_PATH%/%FOLDER% 10 %OUTPUT%', 1, '2014-11-10');
+insert into "mutation_engines" values (15, 'Melkor mutator multiple', 'This is a wrapper using Melkor mutator to create a zip file with multiple fuzzed samples inside. Useful to fuzz Antivirus engines.', '%NIGHTMARE_PATH%/mutators/melkor_mutator_multiple.py %TEMPLATES_PATH%/%FOLDER% 20 %OUTPUT%', 1, '2014-11-10');
 CREATE TABLE `project_engines` (
   `project_engine_id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `project_id` int(11) NOT NULL,
