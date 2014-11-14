@@ -3,14 +3,19 @@ Nigtmare
 
  [ ] Triggers. Priority 1.
  [ ] Crash verifier.
+  [ ] Launch automatically after a trigger.
  [ ] Specific sample from a set finder.
  [ ] Valgrind runner.
+  [ ] Launch automatically after a trigger.
  [ ] Exploitability checker.
+  [ ] Launch automatically after a trigger.
  [/] Test case reduction.
+  [ ] Launch automatically after a trigger.
   [ ] Test case reduction for highly changed files.
   [ ] Build diff files for binary patches.
   [ ] Improve nfp_min.py to handle such diff files.
  [ ] Integrate 'bcf' with the queues system.
+  [ ] Use it to explore more in depth files after a trigger.
   [ ] Providing maximized versions of the files?
   [ ] Use it for generating maximized files.
   [ ] Generate nice genetic graphs with this tool.
