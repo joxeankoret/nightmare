@@ -1,6 +1,7 @@
 Nigtmare
 --------
 
+ [ ] Triggers. Priority 1.
  [ ] Crash verifier.
  [ ] Specific sample from a set finder.
  [ ] Valgrind runner.
