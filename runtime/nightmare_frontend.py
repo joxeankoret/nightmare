@@ -55,6 +55,7 @@ urls = (
     '/find_original', 'find_original',
     '/show_diff', 'show_diff',
     '/download_project', 'download_project',
+    '/triggers', 'triggers'
 )
 
 app = web.application(urls, globals())
@@ -347,6 +348,18 @@ class del_project:
     if i.id == -1:
       return render.error("Invalid project identifier")
     return render.del_project(i.id)
+
+#-----------------------------------------------------------------------
+class triggers:
+  def GET(self):
+    if not 'user' in session or session.user is None:
+      f = register_form()
+      return render.login(f)
+
+    db = init_web_db()
+    sql = "select * from triggers order by date desc"
+    res = db.query(sql)
+    return render.triggers(res)
 
 #-----------------------------------------------------------------------
 class mutation_engines:

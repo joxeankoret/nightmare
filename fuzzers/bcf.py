@@ -177,14 +177,14 @@ class CBlindCoverageFuzzer:
       self.cleanup = None
     
     try:
-      self.iterative = bool(int(parser.get(self.section, 'iterative')))
+      self.iterative = parser.getboolean(self.section, 'iterative')
       if self.iterative:
         debug("Iterative algorithm in use")
     except:
       self.iterative = False
     
     try:
-      self.save_generations = bool(int(parser.get(self.section, 'save-generations')))
+      self.save_generations = parser.getboolean(self.section, 'save-generations')
     except:
       self.save_generations = False
 
@@ -214,22 +214,22 @@ class CBlindCoverageFuzzer:
       pass
 
     try:
-      self.generation_bottom_level = int(parser.get(self.section, 'generation-bottom-level'))
+      self.generation_bottom_level = parser.getint(self.section, 'generation-bottom-level')
     except:
       self.generation_bottom_level = -100
 
     try:
-      self.hide_output = bool(int(parser.get(self.section, 'hide-output')))
+      self.hide_output = parser.getboolean(self.section, 'hide-output')
     except:
       self.hide_output = True
 
     try:
-      self.skip_bytes = int(parser.get(self.section, 'skip-bytes'))
+      self.skip_bytes = parser.getint(self.section, 'skip-bytes')
     except:
       self.skip_bytes = 4
     
     try:
-      self.non_uniques = bool(parser.get(self.section, 'non-uniques'))
+      self.non_uniques = parser.getboolean(self.section, 'non-uniques')
     except:
       self.non_uniques = False
 
@@ -293,7 +293,7 @@ class CBlindCoverageFuzzer:
     self.lock.acquire()
     try:
       buf = bytearray(template)
-      buf[self.skip_bytes + self.stats["iteration"]] = chr(self.stats["iteration_char"])
+      buf[(self.skip_bytes + self.stats["iteration"]) % len(buf)] = chr(self.stats["iteration_char"])
       ret = self.stats["iteration"], 1, buf
 
       self.stats["iteration_char"] += 1
@@ -353,7 +353,12 @@ class CBlindCoverageFuzzer:
     buf = open(filename, "rb").read()
     # TODO: Check this...
     size = random.randint(0, self.max_size)
-    offset = random.randint(self.skip_bytes, min(len(buf)-size, len(template)-size))
+    offset = 0
+    if  min(len(buf)-size, len(template)-size)>self.skip_bytes:
+      offset = random.randint(self.skip_bytes, min(len(buf)-size, len(template)-size))
+    else:
+     offset = self.skip_bytes
+
     chunk = buf[offset:offset+size]
 
     buf = bytearray(template)
@@ -371,7 +376,11 @@ class CBlindCoverageFuzzer:
       buf = bytearray(template)
       key = None
       size = random.randint(0, self.max_size)
-      offset = random.randint(self.skip_bytes, len(buf)-size)
+      offset = 0
+      if len(buf)-size>self.skip_bytes:
+        offset = random.randint(self.skip_bytes, len(buf)-size)
+      else:
+        offset = self.skip_bytes 
 
       values = []
       for i in range(size):
@@ -385,7 +394,7 @@ class CBlindCoverageFuzzer:
       break
 
     for i in range(size):
-      buf[offset+i] = values[i]
+      buf[offset+i%len(buf)] = values[i%len(values)]
 
     return offset, size, buf
 
@@ -496,6 +505,13 @@ class CBlindCoverageFuzzer:
 
     for metric in metrics:
       bbs = int(metric.unique_bbs)
+      if len(metric.all_unique_bbs-self.stats["all"])>0:
+        if len(self.stats["all"])==0:
+          log("=+= Found yet unseen basic block! Saving to templates.")
+          shutil.copyfile(filename,os.path.join(self.templates_path,os.path.basename(filename)))
+
+        self.stats["all"]=self.stats["all"] | metric.all_unique_bbs
+
       if bbs > self.stats["max"]:
         if not self.radamsa:
           log("GOOD! Found an interesting change at 0x%x! Covered basic blocks %d, original maximum %d" % (offset, bbs, self.stats["max"]))
