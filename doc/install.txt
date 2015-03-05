@@ -6,8 +6,9 @@ Nightmare 0.0.4
    
     http://www.capstone-engine.org
     
-   NOTE: You need to install both the core of Capstone and its Python
-   binding for Nightmare to work.
+   A quick way to install Capstone is by using "pip", like followings:
+   
+   $ sudo pip install capstone
 
 02 Create the schema in a MySQL or SQLite database using either the 
    script sql/nightmare.sql or sql/nightmare_sqlite.sql. You  will need
