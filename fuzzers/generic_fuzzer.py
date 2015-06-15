@@ -47,7 +47,7 @@ class CGenericFuzzer:
     parser.read(self.cfg)
 
     if self.section not in parser.sections():
-      raise Exception("Section %s does not exists in the given configuration file" % self.section)
+      raise Exception("Section %s does not exist in the given configuration file" % self.section)
     
     try:
       self.pre_command = parser.get(self.section, 'pre-command')
