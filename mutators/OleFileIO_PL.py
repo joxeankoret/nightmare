@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/python
 # -*- coding: latin-1 -*-
 """
 OleFileIO_PL:

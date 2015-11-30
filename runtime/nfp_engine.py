@@ -12,6 +12,7 @@ import time
 import json
 import base64
 import random
+import shutil
 import tempfile
 
 from hashlib import sha1
@@ -48,10 +49,24 @@ class CSamplesGenerator:
     for row in res:
       self.config[row.name] = row.value
       log("Configuration value %s is %s" % (row.name, row.value))
-    
+
     # Create the corresponding directory if it doesn't exists
     if not os.path.exists(self.config["SAMPLES_PATH"]):
       os.makedirs(self.config["SAMPLES_PATH"])
+
+    # In Linux, it's recommended to use /dev/shm for speed improvements
+    if not "TEMPORARY_PATH" in self.config:
+      if os.path.exists("/dev/shm"):
+        try:
+          os.mkdir("/dev/shm/nfp")
+        except:
+          if os.path.exists("/dev/shm/nfp"):
+            self.config["TEMPORARY_PATH"]  = "/dev/shm/nfp"
+      self.config["TEMPORARY_PATH"] = None
+    
+    if self.config["TEMPORARY_PATH"] is not None:
+      if not os.path.exists(self.config["TEMPORARY_PATH"]):
+        os.mkdir(self.config["TEMPORARY_PATH"])
 
   def get_project_engines(self):
     res = self.db.query(""" select p.name project_name,
@@ -83,7 +98,7 @@ class CSamplesGenerator:
 
   def get_command(self, cmd, filename, subfolder):
     cmd = cmd.replace("%INPUT%", '"%s"' % filename)
-    temp_file = tempfile.mktemp(dir=self.config["SAMPLES_PATH"])
+    temp_file = tempfile.mktemp(dir=self.config["TEMPORARY_PATH"])
     cmd = cmd.replace("%OUTPUT%", temp_file)
     cmd = cmd.replace("%FOLDER%", subfolder)
     for key in self.config:
@@ -186,7 +201,7 @@ class CSamplesGenerator:
       job = q.reserve()
       if job.body.find(".") > -1 or job.body.find("/") > -1:
         raise Exception("Invalid filename %s" % job.body)
-      sample_file = os.path.join(self.config["SAMPLES_PATH"], job.body)
+      sample_file = os.path.join(self.config["TEMPORARY_PATH"], job.body)
       log("Deleting sample file %s" % sample_file)
 
       try:
@@ -207,7 +222,7 @@ class CSamplesGenerator:
     new_path = os.path.join(crash_path, file_hash)
 
     log("Saving test file %s" % new_path)
-    os.rename(temp_file, new_path)
+    shutil.move(temp_file, new_path)
 
     if os.path.exists(temp_file + ".diff"):
       os.rename(temp_file + ".diff", new_path + ".diff")
@@ -299,7 +314,7 @@ def do_generate():
   except:
     print "Error:", sys.exc_info()[1]
     # Uncomment it for debugging purposes, not for the release
-    #raise
+    raise
 
 #-----------------------------------------------------------------------
 def main():

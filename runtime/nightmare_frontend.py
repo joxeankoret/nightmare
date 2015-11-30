@@ -35,6 +35,7 @@ urls = (
     '/projects', 'projects',
     '/engines', 'mutation_engines',
     '/project_engines', 'project_engines',
+    '/project_triggers', 'project_triggers',
     '/nodes', 'nodes',
     '/results', 'results',
     '/bugs', 'bugs',
@@ -50,6 +51,7 @@ urls = (
     '/del_mutation_engine', 'del_mutation_engine',
     '/update_project_engine', 'update_project_engine',
     '/view_crash', 'view_crash',
+    '/next_crash', 'next_crash',
     '/download_sample', 'download_sample',
     '/find_samples', 'find_samples',
     '/find_original', 'find_original',
@@ -133,10 +135,11 @@ class config:
       f = register_form()
       return render.login(f)
     
-    i = web.input(samples_path="", templates_path="", nightmare_path="")
+    i = web.input(samples_path="", templates_path="", nightmare_path="", \
+                  temporary_path="")
     if i.samples_path == "" or i.templates_path == "" or \
-       i.nightmare_path == "":
-      render.error("Invalid samples, templates or nightmare path")
+       i.nightmare_path == "" or i.temporary_path == "":
+      render.error("Invalid samples, templates, temporary or nightmare path")
     
     db = init_web_db()
     with db.transaction():
@@ -164,6 +167,14 @@ class config:
         sql = "insert into config (name, value) values ('NIGHTMARE_PATH', $value)"
       db.query(sql, vars={"value":i.nightmare_path})
       
+      sql = "select 1 from config where name = 'TEMPORARY_PATH'"
+      res = list(db.query(sql))
+      if len(res) > 0:
+        sql = "update config set value = $value where name = 'TEMPORARY_PATH'"
+      else:
+        sql = "insert into config (name, value) values ('TEMPORARY_PATH', $value)"
+      db.query(sql, vars={"value":i.temporary_path})
+
       sql = "select 1 from config where name = 'QUEUE_HOST'"
       res = list(db.query(sql))
       if len(res) > 0:
@@ -191,12 +202,13 @@ class config:
     sql = """select name, value
                from config
               where name in ('SAMPLES_PATH', 'TEMPLATES_PATH', 'NIGHTMARE_PATH',
-                             'QUEUE_HOST', 'QUEUE_PORT')"""
+                             'TEMPORARY_PATH', 'QUEUE_HOST', 'QUEUE_PORT')"""
     res = db.query(sql)
-    
+
     samples_path = ""
     templates_path = ""
     nightmare_path = ""
+    temporary_path = ""
     queue_host = "localhost"
     queue_port = 11300
     for row in res:
@@ -207,13 +219,15 @@ class config:
         templates_path = value
       elif name == 'NIGHTMARE_PATH':
         nightmare_path = value
+      elif name == 'TEMPORARY_PATH':
+        temporary_path = value
       elif name == 'QUEUE_HOST':
         queue_host = value
       elif name == 'QUEUE_PORT':
         queue_port = value
 
-    return render.config(samples_path, templates_path, nightmare_path,
-                          queue_host, queue_port)
+    return render.config(samples_path, templates_path, temporary_path,
+                         nightmare_path, queue_host, queue_port)
 
 #-----------------------------------------------------------------------
 class users:
@@ -386,8 +400,6 @@ class add_mutation_engine:
       return render.error("No mutation engine description specified")
     elif i.command == "":
       return render.error("No mutation engine command specified")
-    elif i.command.find("%INPUT%") == -1 and i.command.find("%TEMPLATES_PATH%") == -1:
-      return render.error("No input template filename specified in the mutation engine command")
     elif i.command.find("%OUTPUT%") == -1:
       return render.error("No output mutated filename specified in the mutation engine command")
     
@@ -412,8 +424,6 @@ class edit_mutation_engine:
       return render.error("No mutation engine description specified")
     elif i.command == "":
       return render.error("No mutation engine command specified")
-    elif i.command.find("%INPUT%") == -1 and i.command.find("%TEMPLATES_PATH%") == -1:
-      return render.error("No input template filename specified in the mutation engine command")
     elif i.command.find("%OUTPUT%") == -1:
       return render.error("No output mutated filename specified in the mutation engine command")
     
@@ -499,6 +509,14 @@ class project_engines:
     return render.project_engines(projects, project_engines, engines)
 
 #-----------------------------------------------------------------------
+class project_triggers:
+  def GET(self):
+    if not 'user' in session or session.user is None:
+      f = register_form()
+      return render.login(f)
+    return render.error("Not yet implemented")
+
+#-----------------------------------------------------------------------
 class update_project_engine:
   def GET(self):
     if not 'user' in session or session.user is None:
@@ -575,7 +593,67 @@ class bugs:
                group by 1
                order by 4 desc"""
     bugs = list(db.query(sql))
-    return render.bugs(bugs)
+    
+    sql = """ select p.name, 
+                     concat('0x???????', substr(conv(program_counter, 10, 16), length(conv(program_counter, 10, 16))-2)) address,
+                     crash_signal, substr(disassembly, instr(disassembly, ' ')+1) dis, count(*) count
+                from crashes c,
+                     projects p
+               where p.project_id = c.project_id
+                 and crash_signal != 'UNKNOWN'
+                 and p.enabled = 1
+               group by 1, 2
+               order by p.project_id desc"""
+    tmp = list(db.query(sql))
+
+    project_bugs = {}
+    for bug in tmp:
+      try:
+        project_bugs[bug["name"]].append(bug)
+      except KeyError:
+        project_bugs[bug["name"]] = [bug]
+
+    return render.bugs(bugs, project_bugs)
+
+#-----------------------------------------------------------------------
+def hexor(buf):
+  try:
+    return hex(buf)
+  except:
+    return buf
+
+#-----------------------------------------------------------------------
+def render_crash(crash_id):
+  # XXX: FIXME: Joxean, why do 2 queries instead of one????
+  # Get the project_id from the crash_id
+  db = init_web_db()
+  vars = {"id":crash_id}
+  res = db.select("crashes", where="crash_id=$id", vars=vars)
+  crash_row = res[0]
+
+  # Get the project name
+  where = "project_id=$id"
+  vars = {"id":crash_row.project_id}
+  res = db.select("projects", what="name", where=where, vars=vars)
+  project_name = res[0].name
+  
+  crash_data = {}
+  crash_data["crash_id"] = crash_row.crash_id
+  crash_data["project_id"] = crash_row.project_id
+  crash_data["sample_id"] = crash_row.sample_id
+  crash_data["program_counter"] = crash_row.program_counter
+  crash_data["crash_signal"] = crash_row.crash_signal
+  crash_data["exploitability"] = crash_row.exploitability
+  crash_data["disassembly"] = crash_row.disassembly
+  crash_data["date"] = crash_row.date
+  crash_data["total_samples"] = crash_row.total_samples
+
+  additional = json.loads(crash_row.additional)
+  crash_data["additional"] = additional
+
+  return render.view_crash(project_name, crash_data, str=str, map=map, \
+                           repr=myrepr, b64=b64decode, sorted=sorted, \
+                           type=type, hexor=hexor)
 
 #-----------------------------------------------------------------------
 class view_crash:
@@ -584,6 +662,15 @@ class view_crash:
       f = register_form()
       return render.login(f)
 
+    i = web.input()
+    if not i.has_key("id"):
+      return render.error("No crash identifier given")
+
+    return render_crash(i.id)
+
+#-----------------------------------------------------------------------
+class next_crash:
+  def GET(self):
     i = web.input()
     if not i.has_key("id"):
       return render.error("No crash identifier given")
@@ -597,26 +684,14 @@ class view_crash:
     crash_row = res[0]
 
     # Get the project name
-    where = "project_id=$id"
-    vars = {"id":crash_row.project_id}
-    res = db.select("projects", what="name", where=where, vars=vars)
-    project_name = res[0].name
-    
-    crash_data = {}
-    crash_data["crash_id"] = crash_row.crash_id
-    crash_data["project_id"] = crash_row.project_id
-    crash_data["sample_id"] = crash_row.sample_id
-    crash_data["program_counter"] = crash_row.program_counter
-    crash_data["crash_signal"] = crash_row.crash_signal
-    crash_data["exploitability"] = crash_row.exploitability
-    crash_data["disassembly"] = crash_row.disassembly
-    crash_data["date"] = crash_row.date
-    crash_data["total_samples"] = crash_row.total_samples
-
-    additional = json.loads(crash_row.additional)
-    crash_data["additional"] = additional
-
-    return render.view_crash(project_name, crash_data, str=str, map=map, repr=myrepr, b64=b64decode)
+    where = "crash_id < $id and project_id = $project_id"
+    vars = {"project_id":crash_row.project_id, "id":crash_id}
+    rows = db.select("crashes", what="crash_id", where=where, vars=vars, order="crash_id desc")
+    if len(rows) > 0:
+      crash_id = rows[0].crash_id
+      return render_crash(crash_id)
+    else:
+      return render.error("No more crashes for this project")
 
 #-----------------------------------------------------------------------
 class download_sample:

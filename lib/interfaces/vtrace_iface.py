@@ -144,14 +144,16 @@ def main(args):
       sys.exit(1)
     else:
       pid = int(args[1])
-      # Schedule a timer to detach from the process after some seconds
-      timer = threading.Timer(timeout, kill_process, (tr, False, ))
-      timer.start()
+      if timeout != 0:
+        # Schedule a timer to detach from the process after some seconds
+        timer = threading.Timer(timeout, kill_process, (tr, False, ))
+        timer.start()
       tr.attach(pid)
   else:    
-    # Schedule a timer to kill the process after 5 seconds
-    timer = threading.Timer(timeout, kill_process, (tr, True, ))
-    timer.start()
+    if timeout != 0:
+      # Schedule a timer to kill the process after 5 seconds
+      timer = threading.Timer(timeout, kill_process, (tr, True, ))
+      timer.start()
     tr.execute(" ".join(args))
     tr.run()
 
@@ -166,7 +168,8 @@ def main(args):
     except:
       break
 
-  timer.cancel()
+  if timeout != 0:
+    timer.cancel()
   # Don't do anything else, the process is gone
   if os.name != "nt" and not tr.attached:
     return None

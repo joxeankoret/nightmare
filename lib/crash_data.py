@@ -28,7 +28,7 @@ class CCrashData:
       self.data[category][key] = value
     except KeyError:
       self.data[category] = {key:value}
-  
+
   def dump_dict(self):
     return {"pc": self.pc,
              "signal": self.signal,

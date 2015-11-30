@@ -73,11 +73,13 @@ class TimeoutCommand(object):
     if thread.is_alive():
       log('Terminating process after timeout (%d)' % timeout)
       self.process.terminate()
+      self.process.terminate()
       self.process.kill()
+      self.process.wait()
       thread.join()
     self.process.wait()
     ret = self.process.returncode
-    
+
     # A negative return code means a signal was received and the return
     # code is -1 * SIGNAL. Return the expected Unix return code.
     if ret is not None and ret < 0:

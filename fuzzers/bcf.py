@@ -64,6 +64,7 @@ class CBlindCoverageFuzzer:
     # Default output directory is current path
     self.output = "."
     self.input_file = None
+    self.is_dir = False
 
     # Maximum number of bytes to mutate per each try
     self.max_size = random.randint(1, 8)
@@ -90,7 +91,7 @@ class CBlindCoverageFuzzer:
     self.read_target_configuration(parser)
     self.read_bininst_configuration(parser)
     self.read_fuzzer_configuration(parser)
-  
+
   def read_fuzzer_configuration(self, parser):
     """ Read this specific fuzzer additional configuration options from 
         the config file instead of adding a gazilion command line
@@ -308,6 +309,9 @@ class CBlindCoverageFuzzer:
     return ret
 
   def mutate(self, template):
+    if self.is_dir:
+      self.radamsa = True
+
     if self.iterative:
       debug("Iterative2?")
       return self.iterative_mutator(template)
@@ -331,14 +335,24 @@ class CBlindCoverageFuzzer:
 
   def mutate_radamsa(self, template):
     filename = mktemp()
+    do_file = True
 
-    try:
-      with open(filename, "wb") as f:
-        f.write(template)
-      ret = check_output(["radamsa", filename])
+    if self.is_dir:
+      do_file = False
+      if self.template != "":
+        do_file = random.randint(0, 1)
+
+    if do_file:
+      try:
+        with open(filename, "wb") as f:
+          f.write(template)
+        ret = check_output(["radamsa", filename])
+        ret = 0, len(ret), ret
+      finally:
+        os.remove(filename)
+    else:
+      ret = check_output(["bash", "-c", "radamsa %s/*" % self.input_file])
       ret = 0, len(ret), ret
-    finally:
-      os.remove(filename)
 
     return ret
 
@@ -424,7 +438,7 @@ class CBlindCoverageFuzzer:
         del self.generations[0]
       self.generations.append([bytearray(self.template), dict(self.stats), self.generation_value])
       
-      if self.save_generations:
+      if self.save_generations and buf != "":
         file_hash = sha1(buf).hexdigest()
         ext = os.path.splitext(self.input_file)[1]
         filename = "generation_%s%s" % (file_hash, ext)
@@ -505,7 +519,7 @@ class CBlindCoverageFuzzer:
 
     for metric in metrics:
       bbs = int(metric.unique_bbs)
-      if len(metric.all_unique_bbs-self.stats["all"])>0:
+      if False and len(metric.all_unique_bbs-self.stats["all"])>0:
         if len(self.stats["all"])==0:
           log("=+= Found yet unseen basic block! Saving to templates.")
           shutil.copyfile(filename,os.path.join(self.templates_path,os.path.basename(filename)))
@@ -520,7 +534,7 @@ class CBlindCoverageFuzzer:
         if self.iterative:
           self.stats["iteration_char"] = 0
           self.stats["iteration"] += 1
-        
+
         increase = (bbs - self.stats["max"])
         self.generation_value += increase
         self.apply_bytes(offset, size, buf)
@@ -561,6 +575,11 @@ class CBlindCoverageFuzzer:
 
   def fuzz(self, input_file, output, max_iterations=0):
     log("Input file is %s" % input_file)
+
+    if os.path.isdir(input_file):
+      log("Input is a directory, only radamsa will be enabled...")
+      self.is_dir = True
+
     self.input_file = input_file
     self.output = output
 
@@ -577,13 +596,20 @@ class CBlindCoverageFuzzer:
       log("Recording a total of %d value(s) of coverage..." % self.metrics)
       self.record_metrics(input_file)
 
-    self.template = bytearray(open(input_file, "rb").read())
-    self.lock = Lock()
+    if self.is_dir:
+      self.template = bytearray()
+      self.lock = Lock()
+    else:
+      self.template = bytearray(open(input_file, "rb").read())
+      self.lock = Lock()
 
     if max_iterations != 0:
       log("Maximizing file in %d iteration(s)" % max_iterations)
     else:
       log("Fuzzing...")
+
+    if self.is_dir:
+      self.radamsa = True
 
     i = 0
     while 1:
@@ -609,7 +635,7 @@ class CBlindCoverageFuzzer:
 
 #-----------------------------------------------------------------------
 def usage():
-  print "Usage:", sys.argv[0], "(32|64) <config file> <section> <input_file> <output directory>"
+  print "Usage:", sys.argv[0], "(32|64) <config file> <section> <input_file> <output directory> [<max iterations>]"
   print
   print "The first argument to", sys.argv[0], "is the architecture, 32bit or 64bit."
 

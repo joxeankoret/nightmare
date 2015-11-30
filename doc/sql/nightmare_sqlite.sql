@@ -93,6 +93,7 @@ INSERT INTO "config" VALUES(8,'TEMPLATES_PATH','/home/joxean/Documentos/research
 INSERT INTO "config" VALUES(9,'NIGHTMARE_PATH','/home/joxean/Documentos/research/nightmare',NULL,NULL);
 INSERT INTO "config" VALUES(10,'QUEUE_HOST','localhost',NULL,NULL);
 INSERT INTO "config" VALUES(11,'QUEUE_PORT','11300',NULL,NULL);
+INSERT INTO "config" VALUES(12,'TEMPORARY_PATH','/tmp',NULL,NULL);
 DELETE FROM sqlite_sequence;
 INSERT INTO "sqlite_sequence" VALUES('mutation_engines',11);
 INSERT INTO "sqlite_sequence" VALUES('config',11);

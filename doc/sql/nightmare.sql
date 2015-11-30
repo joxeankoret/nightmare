@@ -238,7 +238,7 @@ CREATE TABLE `config` (
 
 LOCK TABLES `config` WRITE;
 /*!40000 ALTER TABLE `config` DISABLE KEYS */;
-INSERT INTO `config` VALUES (7,'SAMPLES_PATH','/home/joxean/Documentos/research/nightmare/results',NULL,NULL),(8,'TEMPLATES_PATH','/home/joxean/Documentos/research/nightmare/samples',NULL,NULL),(9,'NIGHTMARE_PATH','/home/joxean/Documentos/research/nightmare',NULL,NULL),(10,'QUEUE_HOST','localhost',NULL,NULL),(11,'QUEUE_PORT','11300',NULL,NULL);
+INSERT INTO `config` VALUES (7,'SAMPLES_PATH','/home/joxean/Documentos/research/nightmare/results',NULL,NULL),(8,'TEMPLATES_PATH','/home/joxean/Documentos/research/nightmare/samples',NULL,NULL),(9,'NIGHTMARE_PATH','/home/joxean/Documentos/research/nightmare',NULL,NULL),(10,'QUEUE_HOST','localhost',NULL,NULL),(11,'QUEUE_PORT','11300',NULL,NULL),(12,'TEMPORARY_PATH','/tmp/',NULL,NULL);
 /*!40000 ALTER TABLE `config` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

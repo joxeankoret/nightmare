@@ -1,4 +1,4 @@
-$def with (bugs)
+$def with (bugs, project_bugs)
 <html>
 <head>
   <link href="/static/nightmare.css" rel="stylesheet" type="text/css">
@@ -7,10 +7,6 @@ $def with (bugs)
     google.load("visualization", "1", {packages:["corechart"]});
     google.setOnLoadCallback(drawChart);
     function drawChart() {
-      /*
-      concat('0x???????', substr(conv(program_counter, 10, 16), length(conv(program_counter, 10, 16))-2)) address,
-      crash_signal, substr(disassembly, instr(disassembly, ' ')+1) dis, count(*) count
-      */
       //----------------------------------------------------------------
       // Different bugs found by pc, signal and disassembly at pc
       var data = google.visualization.arrayToDataTable([
@@ -25,8 +21,28 @@ $def with (bugs)
 
       var chart = new google.visualization.PieChart(document.getElementById('bugs_stats'));
         chart.draw(data, options);
+        
+        
+      //----------------------------------------------------------------
+      // Project-samples statistics
+      $ id = 0
+      $for project in project_bugs:
+        var data = google.visualization.arrayToDataTable([
+          ['Name', 'value'],
+        $for row in project_bugs[project]:
+          ['$row.address $row.crash_signal $row.dis', $row.count],
+        ]);
+
+        var options = {
+            title: 'Project bugs for $project ($len(project_bugs[project]) different)'
+          };
+
+        var chart = new google.visualization.PieChart(document.getElementById('project_$id'));
+          chart.draw(data, options);
+        $ id += 1
 
     }
+
   </script>
 </head>
 <body>
@@ -38,27 +54,31 @@ $def with (bugs)
 <ul>
 <li><a href="/" tabindex="1">Index</a></li>
 <li><a href="/config" tabindex="2">Configuration</a></li>
-<li><a href="/projects" tabindex="4">Projects</a></li>
+<li><a href="/projects" tabindex="3">Projects</a></li>
+<li><a href="/triggers" tabindex="4">Triggers</a></li>
 <li><a href="/engines" tabindex="5">Mutation Engines</a></li>
 <li><a href="/project_engines" tabindex="6">Project Engines</a></li>
-<li><a href="/find_samples" tabindex="7">Samples</a></li>
-<li><a href="/results" tabindex="8">Results</a></li>
-<li><a href="/bugs" tabindex="9">Bugs</a></li>
-<li><a href="/statistics" tabindex="10">Statistics</a></li>
-<li><a href="/logout" tabindex="11">Logout</a></li>
+<li><a href="/project_triggers" tabindex="7">Project Triggers</a></li>
+<li><a href="/find_samples" tabindex="8">Samples</a></li>
+<li><a href="/results" tabindex="9">Results</a></li>
+<li><a href="/bugs" tabindex="10">Bugs</a></li>
+<li><a href="/statistics" tabindex="11">Statistics</a></li>
+<li><a href="/logout" tabindex="12">Logout</a></li>
 </ul>
 </div>
 <div id="content">
 <table border="0">
 <tr><td>
 <h2>Bugs found</h2>
-<h3>Total of $len(bugs) bug(s)</h3>
+<h3>Total of $len(bugs) different bug(s)</h3>
 <div id="bugs_stats" style="width: 900px; height: 500px;"></div>
+$for i in range(len(project_bugs)):
+  <div id="project_$i" style="width: 900px; height: 500px;"></div>
 </td></tr>
 </table>
 </div>
 <div align="center" id="footer">
-<h2>Copyright (c) 2013, 2014 Joxean Koret</h2>
+<h2>Copyright (c) 2013-2015 Joxean Koret</h2>
 </div>
 </body>
 </html>
