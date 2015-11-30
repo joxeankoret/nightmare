@@ -4,7 +4,7 @@
 [BCF]
 templates-path=/home/joxean/Documentos/research/nightmare/samples/av
 # Current options are: DynamoRIO, Pin
-bininst-tool=Pin
+bininst-tool=DynamoRIO
 # Use *ONLY* iterative algorithm instead of all algorithms?
 #iterative=1
 # Use *ONLY* radamsa instead of all the implemented algorithms?
