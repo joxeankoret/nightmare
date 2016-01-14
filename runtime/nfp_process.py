@@ -72,10 +72,14 @@ class TimeoutCommand(object):
     thread.join(timeout)
     if thread.is_alive():
       log('Terminating process after timeout (%d)' % timeout)
-      self.process.terminate()
-      self.process.terminate()
-      self.process.kill()
-      self.process.wait()
+      try:
+        self.process.terminate()
+        self.process.terminate()
+        self.process.kill()
+        self.process.wait()
+      except:
+        log("Error killing process: %s" % str(sys.exc_info()[1]))
+
       thread.join()
     self.process.wait()
     ret = self.process.returncode

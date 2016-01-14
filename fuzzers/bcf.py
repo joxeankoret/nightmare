@@ -11,6 +11,7 @@ generate "stellar" results.
 
 import os
 import sys
+import time
 import shutil
 import random
 import ConfigParser
@@ -239,7 +240,12 @@ class CBlindCoverageFuzzer:
     if input_file.find(" ") and not input_file.startswith('"'):
       input_file = '"%s"' % input_file
 
-    cmd_line = "%s %s" % (self.command, input_file)
+    if self.command.find("@@") > -1:
+      cmd_line = self.command.replace("@@", input_file)
+    else:
+      cmd_line = "%s %s" % (self.command, input_file)
+
+    #log("Launching command %s" % cmd_line)
     cov_data = cov_tool.coverage(command=cmd_line, timeout=self.timeout, hide_output=self.hide_output)
     l.append(cov_data)
 
@@ -351,7 +357,7 @@ class CBlindCoverageFuzzer:
       finally:
         os.remove(filename)
     else:
-      ret = check_output(["bash", "-c", "radamsa %s/*" % self.input_file])
+      ret = check_output(["bash", "-c", "radamsa -r %s" % self.input_file])
       ret = 0, len(ret), ret
 
     return ret
@@ -561,13 +567,19 @@ class CBlindCoverageFuzzer:
       if metric.exit_code in RETURN_SIGNALS:
         self.generation_value += abs(self.generation_bottom_level)
         ret = metric.exit_code
-        log("*** Found a BUG, caught signal %d (%s), hurra!" % (ret, RETURN_SIGNALS[ret]))
-        self.dump_poc(filename, offset, size, buf)
-        self.bugs += 1
+        if RETURN_SIGNALS[ret] != "SIGTERM":
+          log("*** Found a BUG, caught signal %d (%s), hurra!" % (ret, RETURN_SIGNALS[ret]))
+          self.dump_poc(filename, offset, size, buf)
+          self.bugs += 1
+        else:
+          log("*** Target received signal SIGTERM. Bug found or the box is running out of resources...")
+          log("Waiting for at least 1 minute...")
+          time.sleep(60)
+          log("Resuming...")
 
     debug("Removing test-case %s" % filename)
     os.remove(filename)
-  
+
   def show_generation(self, i):
     line = "Iteration %d, current generation value %d, total generation(s) preserved %d"
     line = line % (i, self.generation_value, len(self.generations))
@@ -594,6 +606,9 @@ class CBlindCoverageFuzzer:
     
     if not loaded:  
       log("Recording a total of %d value(s) of coverage..." % self.metrics)
+      if self.is_dir:
+        # As the initial template, use the first file we discover
+        input_file = os.path.join(input_file, os.listdir(input_file)[0])
       self.record_metrics(input_file)
 
     if self.is_dir:

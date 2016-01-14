@@ -1,4 +1,4 @@
-#!/usr/bin/python
+f#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
 Nightmare Fuzzing Project generic fuzzer
@@ -23,7 +23,7 @@ import config
 from nfp_log import log, debug
 from nfp_queue import get_queue
 from nfp_process import process_manager
-from lib.interfaces import vtrace_iface
+from lib.interfaces import vtrace_iface, gdb_iface
 
 #-----------------------------------------------------------------------
 class CGenericFuzzer:
@@ -106,10 +106,24 @@ class CGenericFuzzer:
       # Silently ignore the exception
       pass
 
+    try:
+      if parser.getboolean(self.section, 'use-gdb'):
+        self.iface = gdb_iface
+      else:
+        self.iface = vtrace_iface
+    except:
+      self.iface = vtrace_iface
+
   def launch_debugger(self, timeout, command, filename):
-    log("Launching debugger with command %s" % " ".join([command, filename]))
-    vtrace_iface.timeout = int(timeout)
-    crash = vtrace_iface.main([command, filename])
+    self.iface.timeout = int(timeout)
+    
+    if command.find("@@") > -1:
+      cmd = [command.replace("@@", filename), ]
+    else:
+      cmd = [command, filename]
+    
+    log("Launching debugger with command %s" % " ".join(cmd))
+    crash = self.iface.main(cmd)
     return crash
 
   def launch_sample(self, buf):
@@ -178,6 +192,9 @@ class CGenericFuzzer:
         os.system(self.cleanup)
         debug("Done")
       job.delete()
+      
+      if self.iface == gdb_iface:
+        break
 
 #-----------------------------------------------------------------------
 def do_fuzz(cfg, section):

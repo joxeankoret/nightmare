@@ -13,6 +13,8 @@ $def with (sample_stats, exploitables, signals, disassemblies, bugs, tube_stats)
         ['Project', 'Samples', 'Iteration', 'Crashes'],
       $for row in sample_stats:
         ['$row.name', $row.total_samples, $row.iteration, $row.crashes],
+      $if len(sample_stats) == 0:
+        ['No data', 0, 0, 0],
       ]);
 
       var options = {

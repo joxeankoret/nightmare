@@ -81,11 +81,12 @@ $def with(project_name, crash_data, str, map, repr, b64, sorted, type, hexor)
           <th>Address</th>
           <th>Module</th>
         </tr>
-        $for stack in sorted(crash_data["additional"]["stack trace"], key=int):
-          <tr>
-            <td>$hexor(crash_data["additional"]["stack trace"][stack][0])</td>
-            <td>$crash_data["additional"]["stack trace"][stack][1]</td>
-          </tr>
+        $if "stack trace" in crash_data["additional"]:
+          $for stack in sorted(crash_data["additional"]["stack trace"], key=int):
+            <tr>
+              <td>$hexor(crash_data["additional"]["stack trace"][stack][0])</td>
+              <td>$crash_data["additional"]["stack trace"][stack][1]</td>
+            </tr>
       </table>
     </td>
   </tr>

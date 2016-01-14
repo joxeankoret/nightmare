@@ -251,7 +251,7 @@ class CSamplesGenerator:
                      additional = str(additional_info))
       
       self.reset_iteration(project_id)
-  
+
   def reset_iteration(self, project_id):
     vars = {"project_id":project_id}
     where = "project_id = $project_id and mutation_engine_id = -1"
