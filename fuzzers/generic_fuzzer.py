@@ -1,4 +1,4 @@
-f#!/usr/bin/python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
 Nightmare Fuzzing Project generic fuzzer
