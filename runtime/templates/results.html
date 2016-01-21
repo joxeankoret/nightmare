@@ -1,9 +1,26 @@
-$def with (crashes, show_all)
+$def with (crashes, show_all, field, field_value)
 <html>
 <head>
 <link href="/static/nightmare.css" rel="stylesheet" type="text/css">
+<script>
+function filters() {
+  var idSelected = document.getElementById("idSelected");
+  selected = idSelected.value;
+  if ( selected != "" ) {
+    var idSelect = document.getElementById("idSelect");
+    var options = idSelect.options;
+    for ( i = 0; i < options.length; i++ ) {
+      if ( options[i].value == selected )
+        options[i].selected = "true";
+    }
+  }
+
+  // Reload every 60 seconds
+  setTimeout("location.reload()", 60000);
+}
+</script>
 </head>
-<body>
+<body onload="filters()">
 <div align="center">
 <h1>Nightmare Fuzzing Project</h1>
 </div>
@@ -27,6 +44,21 @@ $def with (crashes, show_all)
 <div id="content">
 <tr><td>
 <h2>Fuzzing Results</h2>
+<form name="fmFilter">
+  <label>Filter by field</label>
+  <input type="hidden" id="idSelected" value="$field">
+  <select name="field" id="idSelect">
+    <option value="crash_signal">Signal</option>
+    <option value="program_counter">Program counter</option>
+    <option value="disassembly">Disassembly</option>
+    <option value="exploitability">Exploitable</option>
+    <option value="date">Date</option>
+  </select>
+  <label for="fieldValue">with value similar to</label>
+  <input type="text" name="fieldValue" id="idFieldValue" value="$field_value">
+  <input type="submit" value="Apply">
+  <input type="button" value="Reset" onclick="javascript:window.location.href='/results';">
+</form>
 <table border="0">
   $if len(crashes) > 0:
     <table border="1" id="data">
@@ -52,7 +84,7 @@ $def with (crashes, show_all)
           $ left = len(crashes[project]) - i
           <tr>
             <td colspan="6" align="center">
-              $left crash(es) hidden... <a href="?show_all=1">Show all crashes</a>.
+              $left crash(es) hidden... <a href="?show_all=1&field=$field&fieldValue=$field_value">Show all crashes</a>.
             </td>
           </tr>
           $break
@@ -66,8 +98,20 @@ $def with (crashes, show_all)
           </td>
           <td>$crash.pc</td>
           <td>$crash.crash_signal</td>
-          <td>$crash.exploitability</td>
-          <td>$crash.disassembly</td>
+          <td>
+          $ is_exploitable = crash.exploitability.lower() == "exploitable"
+          $if is_exploitable:
+            <b><font color='red'>***
+          $crash.exploitability
+          $if is_exploitable:
+            ***</font></b>
+          </td>
+          <td>
+            $if len(crash.disassembly) > 80:
+              $crash.disassembly[:80]...
+            $else:
+              $crash.disassembly
+          </td>
           <td>$crash.date</td>
         </tr>
         $ i += 1

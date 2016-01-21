@@ -550,7 +550,7 @@ class results:
       f = register_form()
       return render.login(f)
     
-    i = web.input(show_all=0)
+    i = web.input(show_all=0, field="", fieldValue="")
 
     db = init_web_db()
     # XXX: There is neither CONV nor CONCAT functions in either PgSQL or
@@ -562,8 +562,21 @@ class results:
                 from crashes c,
                      projects p
                where p.project_id = c.project_id
-                 and p.enabled = 1
-               order by crash_id desc """
+                 and p.enabled = 1 """
+    
+    if i.field != "" and i.fieldValue != "":
+      valid_fields = ["crash_signal", "program_counter", "exploitability", 
+                      "disassembly", "date"]
+      if i.field not in valid_fields:
+        return render.error("Invalid field %s" % i.field)
+      
+      value = i.fieldValue.replace("'", "")
+      if i.field != "program_counter":
+        sql += " and c.%s like '%s'" % (i.field, value)
+      else:
+        sql += " and concat(\"0x\", CONV(program_counter, 10, 16)) like '%s'" % (value)
+
+    sql += """order by crash_id desc """
     res = db.query(sql)
     results = {}
     for row in res:
@@ -573,7 +586,7 @@ class results:
       except:
         results[project_name] = [row]
 
-    return render.results(results, i.show_all)
+    return render.results(results, i.show_all, i.field, i.fieldValue)
 
 #-----------------------------------------------------------------------
 class bugs:
