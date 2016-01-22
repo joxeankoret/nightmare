@@ -570,7 +570,7 @@ class results:
       if i.field not in valid_fields:
         return render.error("Invalid field %s" % i.field)
       
-      value = i.fieldValue.replace("'", "")
+      value = i.fieldValue.replace("'", "").replace("\n", "")
       if i.field != "program_counter":
         sql += " and c.%s like '%s'" % (i.field, value)
       else:
