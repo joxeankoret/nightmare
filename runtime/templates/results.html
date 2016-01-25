@@ -48,11 +48,11 @@ function filters() {
   <label>Filter by field</label>
   <input type="hidden" id="idSelected" value="$field">
   <select name="field" id="idSelect">
-    <option value="crash_signal">Signal</option>
-    <option value="program_counter">Program counter</option>
-    <option value="disassembly">Disassembly</option>
     <option value="exploitability">Exploitable</option>
     <option value="date">Date</option>
+    <option value="disassembly">Disassembly</option>
+    <option value="program_counter">Program counter</option>
+    <option value="crash_signal">Signal</option>
   </select>
   <label for="fieldValue">with value similar to</label>
   <input type="text" name="fieldValue" id="idFieldValue" value="$field_value">
@@ -99,12 +99,19 @@ function filters() {
           <td>$crash.pc</td>
           <td>$crash.crash_signal</td>
           <td>
-          $ is_exploitable = crash.exploitability.lower() == "exploitable"
-          $if is_exploitable:
-            <b><font color='red'>***
+          $ color = prefix = ""
+          $if crash.exploitability.lower() == "exploitable":
+            $ color = "red"
+            $ prefix = "***"
+          $elif crash.exploitability.lower() == "probably_exploitable":
+            $ color = "green"
+            $ prefix = ""
+
+          $if color != "":
+            <b><font color='$color'>$prefix
           $crash.exploitability
-          $if is_exploitable:
-            ***</font></b>
+          $if color != "":
+            $prefix</font></b>
           </td>
           <td>
             $if len(crash.disassembly) > 80:

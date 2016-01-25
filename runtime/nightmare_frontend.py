@@ -572,9 +572,9 @@ class results:
       
       value = i.fieldValue.replace("'", "").replace("\n", "")
       if i.field != "program_counter":
-        sql += " and c.%s like '%s'" % (i.field, value)
+        sql += " and lower(c.%s) like lower('%s')" % (i.field, value)
       else:
-        sql += " and concat(\"0x\", CONV(program_counter, 10, 16)) like '%s'" % (value)
+        sql += " and lower(concat(\"0x\", CONV(program_counter, 10, 16))) like lower('%s')" % (value)
 
     sql += """order by crash_id desc """
     res = db.query(sql)
