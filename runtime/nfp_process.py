@@ -5,6 +5,7 @@ Nightmare Fuzzing Project
 @author: joxean
 """
 
+import os
 import sys
 import threading
 import subprocess
@@ -23,6 +24,10 @@ RETURN_SIGNALS[134] = "SIGABRT"
 RETURN_SIGNALS[133] = "SIGTRAP"
 RETURN_SIGNALS[132] = "SIGILL"
 RETURN_SIGNALS[143] = "SIGTERM"
+# These are the usual return codes for crashing Windows programs. Do we
+# need to add more codes?
+RETURN_SIGNALS[0xC0000005] = "ACCESS_VIOLATION"
+RETURN_SIGNALS[0xC00000FD] = "STACK_OVERFLOW"
 
 #-----------------------------------------------------------------------
 def process_manager(total_procs, target, args, wait_time=0.2):
@@ -62,7 +67,13 @@ class TimeoutCommand(object):
   def run(self, timeout=60):
     def target():
       debug('Thread started')
-      self.process = subprocess.Popen("exec %s" % self.cmd, shell=True)
+      if os.name == "nt":
+        line = self.cmd
+        shell = False
+      else: # Unix based
+        line = "exec %s" % self.cmd
+        shell = True
+      self.process = subprocess.Popen(line, shell=shell)
       self.process.communicate()
       debug('Thread finished')
 
@@ -81,13 +92,17 @@ class TimeoutCommand(object):
         log("Error killing process: %s" % str(sys.exc_info()[1]))
 
       thread.join()
+
     self.process.wait()
     ret = self.process.returncode
 
     # A negative return code means a signal was received and the return
     # code is -1 * SIGNAL. Return the expected Unix return code.
     if ret is not None and ret < 0:
-      ret = abs(ret) + 128
+      if os.name == "nt":
+        ret = ret & 0xFFFFFFFF
+      else:
+        ret = abs(ret) + 128
     return ret
 
 #-----------------------------------------------------------------------
