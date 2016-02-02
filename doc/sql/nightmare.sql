@@ -232,6 +232,17 @@ CREATE TABLE `config` (
 ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+DROP TABLE IF EXISTS `triggers`;
+
+CREATE TABLE `triggers` (
+  `trigger_id` int(11) NOT NULL AUTO_INCREMENT,
+  `description` varchar(300) DEFAULT NULL,
+  `command` text,
+  `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `enabled` tinyint(1) DEFAULT '1',
+  PRIMARY KEY (`trigger_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1
+
 --
 -- Dumping data for table `config`
 --
