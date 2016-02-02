@@ -1,0 +1,70 @@
+$def with (rows)
+<html>
+<head>
+<link href="/static/nightmare.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<div align="center">
+<h1>Nightmare Fuzzing Project</h1>
+</div>
+<div id="vertmenu"> 
+<h1>Navigation</h1>
+<ul>
+<li><a href="/" tabindex="1">Index</a></li>
+<li><a href="/config" tabindex="2">Configuration</a></li>
+<li><a href="/projects" tabindex="3">Projects</a></li>
+<li><a href="/triggers" tabindex="4">Triggers</a></li>
+<li><a href="/engines" tabindex="5">Mutation Engines</a></li>
+<li><a href="/project_engines" tabindex="6">Project Engines</a></li>
+<li><a href="/project_triggers" tabindex="7">Project Triggers</a></li>
+<li><a href="/find_samples" tabindex="8">Samples</a></li>
+<li><a href="/results" tabindex="9">Results</a></li>
+<li><a href="/bugs" tabindex="10">Bugs</a></li>
+<li><a href="/statistics" tabindex="11">Statistics</a></li>
+<li><a href="/logout" tabindex="12">Logout</a></li>
+</ul>
+</div>
+<div id="content">
+<table border="0">
+<tr><td>
+<h2>Triggers</h2>
+<table border="1" id="data">
+  <tr>
+    <th>Description</th>
+    <th>Command</th>
+    <th>Enabled</th>
+    <th>Date</th>
+  </tr>
+</table>
+
+</td></tr>
+<tr><td>
+<hr/>
+<h2>Add new trigger</h2>
+
+  <form action="/add_trigger" method="POST">
+  <table>
+   <tr>
+    <td valign="top"><label for="description">Description</label></td>
+    <td><textarea rows="10" cols="50" name="description"></textarea></td>
+    <td valign="top"><i>Description of the triggers. Use this field to specify what it does, the configuration settings, etc...</i></td>
+   </tr>
+   <tr>
+    <td><label for="command">Command</label></td>
+    <td><input type="text" name="command" size="60"></td>
+    <td><i>Command to execute. The following variables can be used: %CRASH_ID%, %PROJECT_ID%, %SAMPLE_ID%, %SAMPLE_PATH%, %DIFF_PATH%, %TUBE_PREFIX% and %PROJECT_NAME%.</i></td>
+   </tr>
+   <tr>
+     <td colspan="2"><input type="submit" value="Add new trigger"></td>
+   </tr>
+  </table>
+  </form>
+
+</td></tr>
+</table>
+</div>
+<div align="center" id="footer">
+<h2>Copyright (c) 2013-2015 Joxean Koret</h2>
+</div>
+</body>
+</html>
