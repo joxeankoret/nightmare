@@ -6,7 +6,8 @@ to do one of the following 3 tasks:
 
  * Maximize code coverage of one sample.
  * Create new generations that can be used as templates for fuzzing
-   covering more features that then original template.
+   covering more features that then original template from one file
+   or a directory with multiple files.
  * Discover bugs by executing code not typically covered.
  
 It can be considered an evolutionary fuzzer.
