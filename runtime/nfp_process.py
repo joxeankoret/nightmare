@@ -27,6 +27,9 @@ RETURN_SIGNALS[143] = "SIGTERM"
 # These are the usual return codes for crashing Windows programs. Do we
 # need to add more codes?
 RETURN_SIGNALS[0xC0000005] = "ACCESS_VIOLATION"
+RETURN_SIGNALS[0xC0000094] = "INTEGER_DIVIDE_BY_ZERO"
+RETURN_SIGNALS[0xC0000095] = "INTEGER_OVERFLOW"
+RETURN_SIGNALS[0xC0000096] = "PRIVILEGED_INSTRUCTION"
 RETURN_SIGNALS[0xC00000FD] = "STACK_OVERFLOW"
 
 #-----------------------------------------------------------------------
