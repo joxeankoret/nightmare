@@ -1,4 +1,4 @@
-$def with (crashes, show_all, field, field_value)
+$def with (crashes, show_all, field, field_value, no_field="", no_field_value="")
 <html>
 <head>
 <link href="/static/nightmare.css" rel="stylesheet" type="text/css">
@@ -8,6 +8,17 @@ function filters() {
   selected = idSelected.value;
   if ( selected != "" ) {
     var idSelect = document.getElementById("idSelect");
+    var options = idSelect.options;
+    for ( i = 0; i < options.length; i++ ) {
+      if ( options[i].value == selected )
+        options[i].selected = "true";
+    }
+  }
+
+  var idSelected = document.getElementById("idNoSelected");
+  selected = idSelected.value;
+  if ( selected != "" ) {
+    var idSelect = document.getElementById("idNoSelect");
     var options = idSelect.options;
     for ( i = 0; i < options.length; i++ ) {
       if ( options[i].value == selected )
@@ -45,11 +56,11 @@ function filters() {
 <tr><td>
 <h2>Fuzzing Results</h2>
 <form name="fmFilter">
-  <label>Filter by field</label>
+  <label><b class="label">Show</b> results matching field</label>
   <input type="hidden" id="idSelected" value="$field">
   <select name="field" id="idSelect">
-    <option value="exploitability">Exploitable</option>
     <option value="date">Date</option>
+    <option value="exploitability">Exploitable</option>
     <option value="disassembly">Disassembly</option>
     <option value="program_counter">Program counter</option>
     <option value="crash_signal">Signal</option>
@@ -58,6 +69,20 @@ function filters() {
   <input type="text" name="fieldValue" id="idFieldValue" value="$field_value">
   <input type="submit" value="Apply">
   <input type="button" value="Reset" onclick="javascript:window.location.href='/results';">
+
+  <br/>
+
+  <label><b class="label">Hide</b> results matching field</label>
+  <input type="hidden" id="idNoSelected" value="$no_field">
+  <select name="no_field" id="idNoSelect">
+    <option value="crash_signal">Signal</option>
+    <option value="exploitability">Exploitable</option>
+    <option value="date">Date</option>
+    <option value="disassembly">Disassembly</option>
+    <option value="program_counter">Program counter</option>
+  </select>
+  <label for="no_fieldValue">with value similar to</label>
+  <input type="text" name="no_fieldValue" id="idNoFieldValue" value="$no_field_value">
 </form>
 <table border="0">
   $if len(crashes) > 0:
@@ -84,7 +109,7 @@ function filters() {
           $ left = len(crashes[project]) - i
           <tr>
             <td colspan="6" align="center">
-              $left crash(es) hidden... <a href="?show_all=1&field=$field&fieldValue=$field_value">Show all crashes</a>.
+              $left crash(es) hidden... <a href="?show_all=1&field=$field&fieldValue=$field_value&no_field=$no_field&no_fieldValue=$no_field_value">Show all crashes</a>.
             </td>
           </tr>
           $break
@@ -129,7 +154,7 @@ function filters() {
 </table>
 </div>
 <div align="center" id="footer">
-<h2>Copyright (c) 2013-2015 Joxean Koret</h2>
+<h2>Copyright (c) 2013-2016 Joxean Koret</h2>
 </div>
 </body>
 </html>

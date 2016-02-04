@@ -550,7 +550,8 @@ class results:
       f = register_form()
       return render.login(f)
     
-    i = web.input(show_all=0, field="", fieldValue="")
+    i = web.input(show_all=0, field="", fieldValue="", no_field="",
+                  no_fieldValue="")
 
     db = init_web_db()
     # XXX: There is neither CONV nor CONCAT functions in either PgSQL or
@@ -564,9 +565,9 @@ class results:
                where p.project_id = c.project_id
                  and p.enabled = 1 """
     
+    valid_fields = ["crash_signal", "program_counter", "exploitability", 
+                    "disassembly", "date"]
     if i.field != "" and i.fieldValue != "":
-      valid_fields = ["crash_signal", "program_counter", "exploitability", 
-                      "disassembly", "date"]
       if i.field not in valid_fields:
         return render.error("Invalid field %s" % i.field)
       
@@ -575,6 +576,16 @@ class results:
         sql += " and lower(c.%s) like lower('%s')" % (i.field, value)
       else:
         sql += " and lower(concat(\"0x\", CONV(program_counter, 10, 16))) like lower('%s')" % (value)
+
+    if i.no_field != "" and i.no_fieldValue != "":
+      if i.no_field not in valid_fields:
+        return render.error("Invalid field %s" % i.no_field)
+      
+      value = i.no_fieldValue.replace("'", "").replace("\n", "")
+      if i.no_field != "program_counter":
+        sql += " and lower(c.%s) not like lower('%s')" % (i.no_field, value)
+      else:
+        sql += " and lower(concat(\"0x\", CONV(program_counter, 10, 16))) not like lower('%s')" % (value)
 
     sql += """order by crash_id desc """
     res = db.query(sql)
@@ -586,7 +597,8 @@ class results:
       except:
         results[project_name] = [row]
 
-    return render.results(results, i.show_all, i.field, i.fieldValue)
+    return render.results(results, i.show_all, i.field, i.fieldValue,
+                          i.no_field, i.no_fieldValue)
 
 #-----------------------------------------------------------------------
 class bugs:

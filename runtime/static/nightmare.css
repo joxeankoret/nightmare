@@ -103,3 +103,7 @@ h1 {
 #hextable th {
   background-color:#FF9900;
 }
+
+.label {
+  font-family: Courier;
+}
