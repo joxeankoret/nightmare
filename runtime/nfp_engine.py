@@ -225,7 +225,7 @@ class CSamplesGenerator:
     shutil.move(temp_file, new_path)
 
     if os.path.exists(temp_file + ".diff"):
-      os.rename(temp_file + ".diff", new_path + ".diff")
+      shutil.move(temp_file + ".diff", new_path + ".diff")
 
     with self.db.transaction():
       sample_id = self.db.insert("samples", sample_hash=file_hash)
