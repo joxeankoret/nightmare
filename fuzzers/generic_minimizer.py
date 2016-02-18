@@ -85,6 +85,11 @@ sys.path.append(tmp_path)
 from nfp_log import log
 from nfp_process import TimeoutCommand, RETURN_SIGNALS
 
+try:
+  from lib.interfaces import vtrace_iface, gdb_iface, pykd_iface
+except ImportError:
+  from lib.interfaces import vtrace_iface, gdb_iface
+
 #-----------------------------------------------------------------------
 class CGenericMinimizer:
   def __init__(self, cfg, section):
@@ -135,10 +140,22 @@ class CGenericMinimizer:
       self.pre_command = None
 
     try:
+      self.pre_iterations = int(parser.get(self.section, 'pre-iterations'))
+    except:
+      # Ignore it, it isn't mandatory
+      self.pre_iterations = 1
+
+    try:
       self.post_command = parser.get(self.section, 'post-command')
     except:
       # Ignore it, it isn't mandatory
       self.post_command = None
+
+    try:
+      self.post_iterations = int(parser.get(self.section, 'post-iterations'))
+    except:
+      # Ignore it, it isn't mandatory
+      self.post_iterations = 1
 
     try:
       self.command = parser.get(self.section, 'command')
@@ -151,7 +168,7 @@ class CGenericMinimizer:
       raise Exception("No extension specified in the configuration file for section %s" % self.section)
 
     try:
-      self.timeout = parser.get(self.section, 'timeout')
+      self.timeout = parser.get(self.section, 'minimize-timeout')
     except:
       # Default timeout is 90 seconds
       self.timeout = 90    
@@ -172,6 +189,45 @@ class CGenericMinimizer:
       self.signal = int(parser.get(self.section, 'signal'))
     except:
       self.signal = None
+    
+    try:
+      self.mode = parser.get(self.section, 'mode')
+      if self.mode.isdigit():
+        self.mode = int(self.mode)
+    except:
+      self.mode = 32
+
+    try:
+      self.windbg_path = parser.get(self.section, 'windbg-path')
+    except:
+      self.windbg_path = None
+
+    try:
+      self.exploitable_path = parser.get(self.section, 'exploitable-path')
+    except:
+      self.exploitable_path = None
+
+    # Left "for now", for backward compatibility reasons.
+    # Subject to be removed at any time. See below why.
+    try:
+      if parser.getboolean(self.section, 'use-gdb'):
+        self.iface = gdb_iface
+      else:
+        self.iface = vtrace_iface
+    except:
+      self.iface = vtrace_iface
+
+    try:
+      self.debugging_interface = parser.get(self.section, 'debugging-interface')
+      if self.debugging_interface == "pykd":
+        self.iface = pykd_iface
+      elif self.debugging_interface == "gdb":
+        self.iface = gdb_iface
+      else:
+        self.iface = vtrace_iface
+    except:
+      self.debugging_interface = None
+      self.iface = vtrace_iface
 
   def minimize(self, template, crash, diff, outdir):
     self.read_diff(diff)
@@ -188,6 +244,23 @@ class CGenericMinimizer:
 
     self.do_try(outdir, start_at)
   
+  def execute_command(self, cmd, timeout):
+    ret = None
+    if self.debugging_interface is None:
+      cmd_obj = TimeoutCommand(cmd)
+      ret = cmd_obj.run(timeout=self.timeout)
+    else:
+      self.iface.timeout = self.timeout
+      if self.iface != pykd_iface:
+        crash = self.iface.main(cmd)
+      else:
+        crash = pykd_iface.main([cmd], mode=self.mode, windbg_path=self.windbg_path, exploitable_path=self.exploitable_path)
+
+      if crash is not None:
+        ret = 0xC0000005 # Access violation in Windows
+
+    return ret
+
   def do_try(self, outdir, start_at=0):
     # Try to minimize to just one change
     current_change = 0
@@ -211,9 +284,16 @@ class CGenericMinimizer:
             for key in self.env:
               os.putenv(key, self.env[key])
 
+            if self.pre_command is not None:
+              log("Running pre-command %s" % self.pre_command)
+              os.system(self.pre_command)
+
             cmd = "%s %s" % (self.command, temp_file)
-            cmd_obj = TimeoutCommand(cmd)
-            ret = cmd_obj.run(timeout=self.timeout)
+            ret = self.execute_command(cmd, self.timeout)
+
+            if self.post_command is not None:
+              log("Running post-command %s" % self.post_command)
+              os.system(self.post_command)
 
             if ret in RETURN_SIGNALS:
               log("Successfully minimized, caught signal %d (%s)!" % (ret, RETURN_SIGNALS[ret]))
@@ -366,9 +446,18 @@ class CLineMinimizer(CGenericMinimizer):
 
           self.remove_crash_path()
 
+          if i % self.pre_iterations == 0:
+            if self.pre_command is not None:
+              log("Running pre-command %s" % self.pre_command)
+              os.system(self.pre_command)
+
           cmd = "%s %s" % (self.command, temp_file)
-          cmd_obj = TimeoutCommand(cmd)
-          ret = cmd_obj.run(timeout=self.timeout)
+          ret = self.execute_command(cmd, self.timeout)
+
+          if i % self.post_iterations == 0:
+            if self.post_command is not None:
+              log("Running post-command %s" % self.post_command)
+              os.system(self.post_command)
 
           if ret in RETURN_SIGNALS or (self.signal is not None and ret == self.signal) or \
              self.crash_file_exists():
@@ -429,4 +518,3 @@ if __name__ == "__main__":
     main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[5])
   elif len(sys.argv) == 7:
     main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
-

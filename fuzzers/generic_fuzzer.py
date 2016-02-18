@@ -23,7 +23,11 @@ import config
 from nfp_log import log, debug
 from nfp_queue import get_queue
 from nfp_process import process_manager
-from lib.interfaces import vtrace_iface, gdb_iface
+
+try:
+  from lib.interfaces import vtrace_iface, gdb_iface, pykd_iface
+except ImportError:
+  from lib.interfaces import vtrace_iface, gdb_iface
 
 #-----------------------------------------------------------------------
 class CGenericFuzzer:
@@ -107,11 +111,42 @@ class CGenericFuzzer:
       pass
 
     try:
+      self.mode = parser.get(self.section, 'mode')
+      if self.mode.isdigit():
+        self.mode = int(self.mode)
+    except:
+      self.mode = 32
+
+    try:
+      self.windbg_path = parser.get(self.section, 'windbg-path')
+    except:
+      self.windbg_path = None
+
+    try:
+      self.exploitable_path = parser.get(self.section, 'exploitable-path')
+    except:
+      self.exploitable_path = None
+
+    # Left "for now", for backward compatibility reasons.
+    # Subject to be removed at any time. See below why.
+    try:
       if parser.getboolean(self.section, 'use-gdb'):
         self.iface = gdb_iface
       else:
         self.iface = vtrace_iface
     except:
+      self.iface = vtrace_iface
+
+    try:
+      self.debugging_interface = parser.get(self.section, 'debugging-interface')
+      if self.debugging_interface == "pykd":
+        self.iface = pykd_iface
+      elif self.debugging_interface == "gdb":
+        self.iface = gdb_iface
+      else:
+        self.iface = vtrace_iface
+    except:
+      self.debugging_interface = None
       self.iface = vtrace_iface
 
   def launch_debugger(self, timeout, command, filename):
@@ -123,7 +158,11 @@ class CGenericFuzzer:
       cmd = [command, filename]
     
     log("Launching debugger with command %s" % " ".join(cmd))
-    crash = self.iface.main(cmd)
+    if self.iface != pykd_iface:
+      crash = self.iface.main(" ".join(cmd))
+    else:
+      reload(pykd_iface)
+      crash = pykd_iface.main(cmd, mode=self.mode, windbg_path=self.windbg_path, exploitable_path=self.exploitable_path)
     return crash
 
   def launch_sample(self, buf):
@@ -231,4 +270,3 @@ if __name__ == "__main__":
     usage()
   else:
     main(sys.argv[1], sys.argv[2])
-

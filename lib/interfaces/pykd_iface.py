@@ -45,22 +45,35 @@ class ExceptionHandler(pykd.eventHandler):
                                    0XC000009D: "PRIVILEGED_INSTRUCTION"}
     self.exception_info = None
     self.crash_data = None
-    
-  def onException(self, exceptInfo):
-    if not exceptInfo.FirstChance:
-      if exceptInfo.ExceptionCode in self.interesting_exceptions:
-        exc_msg = self.interesting_exceptions[exceptInfo.ExceptionCode]
-      else:
-        exc_msg = "Exception 0x%08x" % exceptInfo.ExceptionCode
 
-      self.exception_info = (exceptInfo.ExceptionCode, exc_msg, exceptInfo)
+  def is_first_chance(self, exceptInfo):
+    if 'FirstChance' in dir(exceptInfo):
+      return exceptInfo.FirstChance
+    else:
+      return exceptInfo.firstChance
+
+  def get_exception_code(self, ei):
+    if 'ExceptionCode' in dir(ei):
+      return ei.ExceptionCode
+    else:
+      return ei.exceptionCode
+
+  def onException(self, exceptInfo):
+    if not self.is_first_chance(exceptInfo):
+      exc_code = self.get_exception_code(exceptInfo)
+      if exc_code in self.interesting_exceptions:
+        exc_msg = self.interesting_exceptions[exc_code]
+      else:
+        exc_msg = "Exception 0x%08x" % exc_code
+
+      self.exception_info = (exc_code, exc_msg, exceptInfo)
       self.exception_occurred = True
       return pykd.eventResult.Break
     return pykd.eventResult.NoChange
 
 #-------------------------------------------------------------------------------
 class CWinDbgInterface(object):
-  def __init__(self, program, mode=32, windbg_path=None):
+  def __init__(self, program, mode=32, windbg_path=None, exploitable_path=None):
     global timeout
 
     self.id = None
@@ -68,8 +81,14 @@ class CWinDbgInterface(object):
     self.program = program
     self.exploitable_path = None
     self.windbg_path = windbg_path
-    self.handler = ExceptionHandler()
-    
+    self.exploitable_path = exploitable_path
+    try:
+      self.handler = ExceptionHandler()
+    except:
+      self.handler = None
+    self.minidump_path = None
+    #self.minidump_path = r"C:\minidumps\\"
+
     if windbg_path is None:
       self.resolve_windbg_path()
 
@@ -94,7 +113,6 @@ class CWinDbgInterface(object):
           value = EnumKey(key, i)
           if value:
             full_key = r"SOFTWARE\Microsoft\Microsoft SDKs\Windows\\" + value
-            print full_key
             key2 = OpenKey(reg, full_key)
             if key2:
               name = QueryValueEx(key2, "ProductName")
@@ -217,6 +235,9 @@ class CWinDbgInterface(object):
 
     self.do_stop = False
     self.id = pykd.startProcess(self.program, debugChildren=True)
+    if self.handler is None:
+      self.handler = ExceptionHandler()
+
     while not self.handler.exception_occurred and not self.do_stop:
       try:
         pykd.go()
@@ -235,6 +256,10 @@ class CWinDbgInterface(object):
 
     ret = None
     if self.handler.exception_occurred:
+      tmp = pykd.dbgCommand("k 1")
+      if tmp.find("Wow64NotifyDebugger") > -1:
+        pykd.dbgCommand(".effmach x86")
+
       stack_trace = pykd.dbgCommand("k")
       registers = pykd.dbgCommand("r")
 
@@ -252,21 +277,26 @@ class CWinDbgInterface(object):
       else:
         msec_path = self.exploitable_path
 
-      print msec_path
       if msec_path is not None:
         full_msec_path = os.path.join(msec_path, r"msec.dll")
-        print full_msec_path
         if os.path.exists(full_msec_path):
-          print "bai?"
-          os.chdir(msec_path)
-          msec_handle = pykd.loadExt(full_msec_path)
-          commandOutput = pykd.callExt(msec_handle, "exploitable", "")
-          exploitable = commandOutput
-          print "exploitable?", exploitable
+          try:
+            msec_handle = pykd.loadExt(full_msec_path)
+            commandOutput = pykd.callExt(msec_handle, "exploitable", "")
+            exploitable = commandOutput
+          except:
+            log("Error loading extension: " + str(sys.exc_info()[1]))
+
+      try:
+        if self.minidump_path is not None:
+          pykd.dbgCommand(r".dump /m /u %s\\" % self.minidump_path)
+          log("*** Minidump written at %s" % self.minidump_path)
+      except:
+        log("!!! Error saving minidump:" + str(sys.exc_info()[1]))
 
       ret = self.create_crash_data(registers, stack_trace, exploitable)
       
-      print pykd.dbgCommand("k 8")
+      print pykd.dbgCommand("k 10")
       print pykd.dbgCommand("r")
       print exploitable
 
@@ -282,12 +312,11 @@ class CWinDbgInterface(object):
 #-------------------------------------------------------------------------------
 def main(args, mode=32, windbg_path=None, exploitable_path=None):
   global timeout
+  if os.getenv("NIGHTMARE_TIMEOUT"):
+    timeout = float(os.getenv("NIGHTMARE_TIMEOUT"))
 
-  timeout = 60
   prog = " ".join(args)
-  #iface = CWinDbgInterface(prog, mode=64, windbg_path=r"C:\Program Files (x86)\Windows Kits\8.1\Debuggers\x64")
-  #iface.exploitable_path = r"C:\Program Files (x86)\Windows Kits\8.1\Debuggers\x64\winext"
-  iface = CWinDbgInterface(prog, mode=mode, windbg_path=windbg_path)
+  iface = CWinDbgInterface(prog, mode=mode, windbg_path=windbg_path, exploitable_path=exploitable_path)
   if exploitable_path is not None:
     iface.exploitable_path = exploitable_path
   return iface.run()
