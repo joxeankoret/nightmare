@@ -254,6 +254,7 @@ class CGenericMinimizer:
       if self.iface != pykd_iface:
         crash = self.iface.main(cmd)
       else:
+        os.putenv("_NT_SYMBOL_PATH", "")
         crash = pykd_iface.main([cmd], mode=self.mode, windbg_path=self.windbg_path, exploitable_path=self.exploitable_path)
 
       if crash is not None:
