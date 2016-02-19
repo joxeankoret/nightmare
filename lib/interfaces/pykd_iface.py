@@ -226,7 +226,12 @@ class CWinDbgInterface(object):
   def timeout_func(self):
     log("Timeout (%d seconds), killing the target..." % self.timeout)
     self.do_stop = True
-    pykd.breakin()
+    try:
+      pykd.breakin()
+    except:
+      # A race condition might happen in the timeout function and in 
+      # such cases we must ignore the error.
+      pass
 
   def run(self):
     if self.timeout != 0:
