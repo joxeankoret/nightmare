@@ -152,8 +152,6 @@ class CGenericFuzzer:
       self.iface = vtrace_iface
 
   def launch_debugger(self, timeout, command, filename):
-    self.iface.timeout = int(timeout)
-
     if command.find("@@") > -1:
       cmd = [command.replace("@@", filename), ]
     else:
@@ -164,7 +162,7 @@ class CGenericFuzzer:
       crash = self.iface.main(" ".join(cmd))
     else:
       reload(pykd_iface)
-      crash = pykd_iface.main(cmd, mode=self.mode, windbg_path=self.windbg_path, exploitable_path=self.exploitable_path)
+      crash = pykd_iface.main(cmd, self.timeout, mode=self.mode, windbg_path=self.windbg_path, exploitable_path=self.exploitable_path)
     return crash
 
   def launch_sample(self, buf):
