@@ -94,7 +94,11 @@ class CWinDbgInterface(object):
     
     self.do_stop = False
     self.timer = None
-    self.timeout = timeout
+
+    if timeout == "Auto":
+      self.timeout = timeout
+    else:
+      self.timeout = int(timeout)
 
   def resolve_windbg_path(self):
     try:
