@@ -568,8 +568,8 @@ class results:
                      crash_signal,
                      exploitability,
                      disassembly,
-                     c1.date
-               FROM    crashes AS c1,
+                     c.date
+               FROM    crashes AS c,
                        projects AS p,
                        (SELECT
                            Concat('0x?????', Substr(Conv(program_counter, 10, 16),
@@ -577,10 +577,10 @@ class results:
                            Max(date) maxdate
                        FROM crashes
                        GROUP BY pc) AS c2
-               WHERE   p.project_id = c1.project_id
+               WHERE   p.project_id = c.project_id
                        AND p.enabled = 1
                        AND pc = c2.pc
-                       AND c1.date = c2.maxdate """
+                       AND c.date = c2.maxdate """
     else:
       hide_dup=False
       sql = """ select crash_id, p.project_id, p.name, sample_id,
