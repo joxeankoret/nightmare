@@ -66,8 +66,11 @@ class TimeoutCommand(object):
   def __init__(self, cmd):
     self.cmd = cmd
     self.process = None
+    
+    self.stderr = None
+    self.stdout = None
 
-  def run(self, timeout=60):
+  def run(self, timeout=60, get_output=False):
     def target():
       debug('Thread started')
       if os.name == "nt":
@@ -76,8 +79,17 @@ class TimeoutCommand(object):
       else: # Unix based
         line = "exec %s" % self.cmd
         shell = True
-      self.process = subprocess.Popen(line, shell=shell)
-      self.process.communicate()
+      
+      if get_output:
+        self.process = subprocess.Popen(line, stdout=subprocess.PIPE,\
+                                      stderr=subprocess.PIPE, shell=shell)
+        out, err = self.process.communicate()
+        self.stdout = out[:8192]
+        self.stderr = err[:8192]
+      else:
+        self.process = subprocess.Popen(line, shell=shell)
+        self.process.communicate()
+
       debug('Thread finished')
 
     thread = threading.Thread(target=target)

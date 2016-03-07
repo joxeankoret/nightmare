@@ -77,9 +77,14 @@ import ConfigParser
 from hashlib import sha1
 
 script_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(script_path)
 tmp_path = os.path.join(script_path, "..")
 sys.path.append(tmp_path)
 tmp_path = os.path.join(tmp_path, "runtime")
+sys.path.append(tmp_path)
+tmp_path = os.path.join(tmp_path, "../lib/")
+sys.path.append(tmp_path)
+tmp_path = os.path.join(tmp_path, "../lib/interfaces")
 sys.path.append(tmp_path)
 
 from nfp_log import log
@@ -87,7 +92,9 @@ from nfp_process import TimeoutCommand, RETURN_SIGNALS
 
 try:
   from lib.interfaces import vtrace_iface, gdb_iface, pykd_iface
+  has_pykd = True
 except ImportError:
+  has_pykd = False
   from lib.interfaces import vtrace_iface, gdb_iface
 
 #-----------------------------------------------------------------------
@@ -249,9 +256,11 @@ class CGenericMinimizer:
     if self.debugging_interface is None:
       cmd_obj = TimeoutCommand(cmd)
       ret = cmd_obj.run(timeout=self.timeout)
+      if cmd_obj.stderr is not None:
+        print cmd_obj.stderr
     else:
       self.iface.timeout = self.timeout
-      if self.iface != pykd_iface:
+      if not has_pykd or self.iface != pykd_iface:
         crash = self.iface.main(cmd)
       else:
         os.putenv("_NT_SYMBOL_PATH", "")
@@ -296,7 +305,8 @@ class CGenericMinimizer:
               log("Running post-command %s" % self.post_command)
               os.system(self.post_command)
 
-            if ret in RETURN_SIGNALS:
+            if ret in RETURN_SIGNALS or (self.signal is not None and ret == self.signal) or \
+             self.crash_file_exists():
               log("Successfully minimized, caught signal %d (%s)!" % (ret, RETURN_SIGNALS[ret]))
               filename = sha1(buf).hexdigest()
               filename = os.path.join(outdir, "%s%s" % (filename, self.extension))
@@ -352,6 +362,11 @@ class CLineMinimizer(CGenericMinimizer):
       self.crash_path = self.parser.get(self.section, 'crash-path')
     except:
       self.crash_path = None
+    
+    try:
+      self.infinite_loop = self.parser.get(self.section, 'crash-path')
+    except:
+      self.infinite_loop = False
 
   def read_template(self, template):
     l = open(template, "rb").readlines()
@@ -452,7 +467,10 @@ class CLineMinimizer(CGenericMinimizer):
               log("Running pre-command %s" % self.pre_command)
               os.system(self.pre_command)
 
-          cmd = "%s %s" % (self.command, temp_file)
+          if self.command.find("@@") == -1:
+            cmd = "%s %s" % (cmd, temp_file)
+          else:
+            cmd = self.command.replace("@@", temp_file)
           ret = self.execute_command(cmd, self.timeout)
 
           if i % self.post_iterations == 0:

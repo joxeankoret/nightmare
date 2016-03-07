@@ -26,8 +26,10 @@ from nfp_process import process_manager
 
 try:
   from lib.interfaces import vtrace_iface, gdb_iface, pykd_iface
+  has_pykd = True
 except ImportError:
   from lib.interfaces import vtrace_iface, gdb_iface
+  has_pykd = False
 
 #-----------------------------------------------------------------------
 class CGenericFuzzer:
@@ -151,14 +153,14 @@ class CGenericFuzzer:
 
   def launch_debugger(self, timeout, command, filename):
     self.iface.timeout = int(timeout)
-    
+
     if command.find("@@") > -1:
       cmd = [command.replace("@@", filename), ]
     else:
       cmd = [command, filename]
-    
+
     log("Launching debugger with command %s" % " ".join(cmd))
-    if self.iface != pykd_iface:
+    if not has_pykd or self.iface != pykd_iface:
       crash = self.iface.main(" ".join(cmd))
     else:
       reload(pykd_iface)
@@ -244,6 +246,7 @@ def do_fuzz(cfg, section):
     log("Aborted")
   except:
     log("Error: %s" % str(sys.exc_info()[1]))
+    raise
 
 #-----------------------------------------------------------------------
 def main(cfg, section):

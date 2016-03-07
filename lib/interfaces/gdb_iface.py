@@ -316,9 +316,10 @@ def main(args, gdb_commands=None):
   if args[0] in ["--attach", "-A"]:
     raise Exception("GDB interface doesn't support attaching")
   else:
-    cmd = " ".join(args)
+    prog = args
+    if type(args) is list:
+      prog = " ".join(args)
 
-  prog = " ".join(args)
   iface = CGDBInterface(prog, gdb_commands=gdb_commands)
   return iface.run()
 
