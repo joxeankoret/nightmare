@@ -264,7 +264,7 @@ class CGenericMinimizer:
         crash = self.iface.main(cmd)
       else:
         os.putenv("_NT_SYMBOL_PATH", "")
-        crash = pykd_iface.main([cmd], mode=self.mode, windbg_path=self.windbg_path, exploitable_path=self.exploitable_path)
+        crash = pykd_iface.main([cmd], timeout, mode=self.mode, windbg_path=self.windbg_path, exploitable_path=self.exploitable_path)
 
       if crash is not None:
         ret = 0xC0000005 # Access violation in Windows

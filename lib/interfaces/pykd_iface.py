@@ -251,7 +251,7 @@ class CWinDbgInterface(object):
       self.handler = ExceptionHandler()
 
     if self.timeout is not None:
-      if self.timeout == "Auto":
+      if self.timeout.lower() == "auto":
         self.thread = Thread(target=self.check_cpu)
         self.thread.start()
       else:

@@ -159,6 +159,7 @@ class CGenericFuzzer:
 
     log("Launching debugger with command %s" % " ".join(cmd))
     if not has_pykd or self.iface != pykd_iface:
+      self.iface.timeout = int(timeout)
       crash = self.iface.main(" ".join(cmd))
     else:
       reload(pykd_iface)
