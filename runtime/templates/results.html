@@ -1,4 +1,4 @@
-$def with (crashes, show_all, field, field_value, no_field="", no_field_value="")
+$def with (crashes, show_all, field, field_value, no_field="", no_field_value="", hide_dups=False)
 <html>
 <head>
 <link href="/static/nightmare.css" rel="stylesheet" type="text/css">
@@ -83,6 +83,12 @@ function filters() {
   </select>
   <label for="no_fieldValue">with value similar to</label>
   <input type="text" name="no_fieldValue" id="idNoFieldValue" value="$no_field_value">
+  $if hide_dups:
+    $ dups = "checked"
+  $else:
+    $ dups = ""
+  <input type="checkbox" name="hideDup" id="hideDup" $dups/>
+  <label for"hideDup">Hide duplicates</label>
 </form>
 <table border="0">
   $if len(crashes) > 0:
@@ -109,7 +115,11 @@ function filters() {
           $ left = len(crashes[project]) - i
           <tr>
             <td colspan="6" align="center">
-              $left crash(es) hidden... <a href="?show_all=1&field=$field&fieldValue=$field_value&no_field=$no_field&no_fieldValue=$no_field_value">Show all crashes</a>.
+              $if hide_dups:
+                $ dups = "on"
+              $else:
+                $ dups = ""
+              $left crash(es) hidden... <a href="?show_all=1&field=$field&fieldValue=$field_value&no_field=$no_field&no_fieldValue=$no_field_value&hideDup=$dups">Show all crashes</a>.
             </td>
           </tr>
           $break

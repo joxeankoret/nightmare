@@ -551,20 +551,46 @@ class results:
       return render.login(f)
     
     i = web.input(show_all=0, field="", fieldValue="", no_field="",
-                  no_fieldValue="")
+                  no_fieldValue="", hideDup="")
 
     db = init_web_db()
     # XXX: There is neither CONV nor CONCAT functions in either PgSQL or
     # SQLite so, in order to support them, I have to create a function
     # for both SQLite and PgSQL to mimic this behaviour.
-    sql = """ select crash_id, p.project_id, p.name, sample_id,
-                     concat("0x", CONV(program_counter, 10, 16)) pc,
-                     crash_signal, exploitability, disassembly, c.date
-                from crashes c,
-                     projects p
-               where p.project_id = c.project_id
-                 and p.enabled = 1 """
-    
+    if i.hideDup != "":
+      hide_dup=True
+      sql = """ SELECT crash_id,
+                     p.project_id,
+                     p.name,
+                     sample_id,
+                     Concat('0x?????', Substr(Conv(program_counter, 10, 16),
+                                       Length(Conv(program_counter, 10, 16)) - 2)) pc,
+                     crash_signal,
+                     exploitability,
+                     disassembly,
+                     c1.date
+               FROM    crashes AS c1,
+                       projects AS p,
+                       (SELECT
+                           Concat('0x?????', Substr(Conv(program_counter, 10, 16),
+                                             Length(Conv(program_counter, 10, 16))-2)) pc,
+                           Max(date) maxdate
+                       FROM crashes
+                       GROUP BY pc) AS c2
+               WHERE   p.project_id = c1.project_id
+                       AND p.enabled = 1
+                       AND pc = c2.pc
+                       AND c1.date = c2.maxdate """
+    else:
+      hide_dup=False
+      sql = """ select crash_id, p.project_id, p.name, sample_id,
+                       concat("0x", CONV(program_counter, 10, 16)) pc,
+                       crash_signal, exploitability, disassembly, c.date
+                  from crashes c,
+                       projects p
+                 where p.project_id = c.project_id
+                   and p.enabled = 1 """
+
     valid_fields = ["crash_signal", "program_counter", "exploitability", 
                     "disassembly", "date"]
     if i.field != "" and i.fieldValue != "":
@@ -598,7 +624,7 @@ class results:
         results[project_name] = [row]
 
     return render.results(results, i.show_all, i.field, i.fieldValue,
-                          i.no_field, i.no_fieldValue)
+                          i.no_field, i.no_fieldValue, hide_dup)
 
 #-----------------------------------------------------------------------
 class bugs:
