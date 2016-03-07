@@ -12,9 +12,10 @@ import sys
 import time
 
 import pykd
+import psutil
 
 from _winreg import *
-from threading import Timer
+from threading import Thread, Timer
 
 dir_name = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(dir_name, ".."))
@@ -24,11 +25,6 @@ sys.path.append(os.path.join(dir_name, "../../runtime"))
 from nfp_log import log
 from crash_data import CCrashData
 
-#-------------------------------------------------------------------------------
-# Default timeout
-timeout = 60
-
-#-------------------------------------------------------------------------------
 class ExceptionHandler(pykd.eventHandler):
   def __init__(self):
     pykd.eventHandler.__init__(self)
@@ -73,9 +69,7 @@ class ExceptionHandler(pykd.eventHandler):
 
 #-------------------------------------------------------------------------------
 class CWinDbgInterface(object):
-  def __init__(self, program, mode=32, windbg_path=None, exploitable_path=None):
-    global timeout
-
+  def __init__(self, program, timeout, mode=32, windbg_path=None, exploitable_path=None):
     self.id = None
     self.mode = mode
     self.program = program
@@ -100,9 +94,11 @@ class CWinDbgInterface(object):
     
     self.do_stop = False
     self.timer = None
-    if os.getenv("NIGHTMARE_TIMEOUT"):
-      timeout = float(os.getenv("NIGHTMARE_TIMEOUT"))
-    self.timeout = timeout
+
+    if timeout == "Auto":
+      self.timeout = timeout
+    else:
+      self.timeout = int(timeout)
 
   def resolve_windbg_path(self):
     try:
@@ -233,15 +229,34 @@ class CWinDbgInterface(object):
       # such cases we must ignore the error.
       pass
 
-  def run(self):
-    if self.timeout != 0:
-      self.timer = Timer(self.timeout, self.timeout_func)
-      self.timer.start()
+  def check_cpu(self):
+    while True:
+      try:
+        proc = psutil.Process(self.pid)
+        cpu = all(0 == proc.cpu_percent(interval=0.1) for x in xrange(20))
+        if cpu is not None and cpu is True:
+          self.do_stop = True
+          pykd.breakin()
+          break
+        else:
+          time.sleep(0.2)
+      except psutil.NoSuchProcess:
+        self.do_stop = True
 
+  def run(self):
     self.do_stop = False
     self.id = pykd.startProcess(self.program, debugChildren=True)
+    self.pid = pykd.getProcessSystemID(self.id)
     if self.handler is None:
       self.handler = ExceptionHandler()
+
+    if self.timeout is not None:
+      if self.timeout == "Auto":
+        self.thread = Thread(target=self.check_cpu)
+        self.thread.start()
+      else:
+        self.timer = Timer(self.timeout, self.timeout_func)
+        self.timer.start()
 
     while not self.handler.exception_occurred and not self.do_stop:
       try:
@@ -315,13 +330,9 @@ class CWinDbgInterface(object):
     return ret
 
 #-------------------------------------------------------------------------------
-def main(args, mode=32, windbg_path=None, exploitable_path=None):
-  global timeout
-  if os.getenv("NIGHTMARE_TIMEOUT"):
-    timeout = float(os.getenv("NIGHTMARE_TIMEOUT"))
-
+def main(args, timeout, mode=32, windbg_path=None, exploitable_path=None):
   prog = " ".join(args)
-  iface = CWinDbgInterface(prog, mode=mode, windbg_path=windbg_path, exploitable_path=exploitable_path)
+  iface = CWinDbgInterface(prog, timeout, mode=mode, windbg_path=windbg_path, exploitable_path=exploitable_path)
   if exploitable_path is not None:
     iface.exploitable_path = exploitable_path
   return iface.run()
