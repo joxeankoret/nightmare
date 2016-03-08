@@ -551,7 +551,7 @@ class results:
       return render.login(f)
     
     i = web.input(show_all=0, field="", fieldValue="", no_field="",
-                  no_fieldValue="", hideDup="")
+                  no_fieldValue="", sortValue="", hideDup="")
 
     db = init_web_db()
     # XXX: There is neither CONV nor CONCAT functions in either PgSQL or
@@ -574,13 +574,14 @@ class results:
                        (SELECT
                            Concat('0x?????', Substr(Conv(program_counter, 10, 16),
                                              Length(Conv(program_counter, 10, 16))-2)) pc,
-                           Max(date) maxdate
+                           Min(crash_id) min_crash
                        FROM crashes
                        GROUP BY pc) AS c2
                WHERE   p.project_id = c.project_id
                        AND p.enabled = 1
-                       AND pc = c2.pc
-                       AND c.date = c2.maxdate """
+                       AND Concat('0x?????', Substr(Conv(program_counter, 10, 16),
+                                             Length(Conv(program_counter, 10, 16))-2)) = c2.pc
+                       AND c.crash_id = c2.min_crash """
     else:
       hide_dup=False
       sql = """ select crash_id, p.project_id, p.name, sample_id,
@@ -613,7 +614,14 @@ class results:
       else:
         sql += " and lower(concat(\"0x\", CONV(program_counter, 10, 16))) not like lower('%s')" % (value)
 
-    sql += """order by crash_id desc """
+    if i.sortValue != "":
+      if i.no_field not in valid_fields:
+        return render.error("Invalid field %s" % i.no_field)
+    
+      sql += " ORDER BY %s DESC" % (i.sortValue)
+    else:
+      sql += " ORDER BY date DESC"
+      
     res = db.query(sql)
     results = {}
     for row in res:
@@ -624,7 +632,7 @@ class results:
         results[project_name] = [row]
 
     return render.results(results, i.show_all, i.field, i.fieldValue,
-                          i.no_field, i.no_fieldValue, hide_dup)
+                          i.no_field, i.no_fieldValue, i.sortValue, hide_dup)
 
 #-----------------------------------------------------------------------
 class bugs:
