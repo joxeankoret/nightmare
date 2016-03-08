@@ -7,6 +7,8 @@ Nightmare Fuzzing Project
 
 import os
 import sys
+import time
+import psutil
 import threading
 import subprocess
 
@@ -70,6 +72,43 @@ class TimeoutCommand(object):
     self.stderr = None
     self.stdout = None
 
+    # It's only used when timeout is set to "auto"
+    self.default_timeout = 60
+    self.thread = None
+    self.pid = None
+    self.cpu_killed = False
+
+  def check_cpu(self):
+    while True:
+      try:
+        if self.pid is None:
+          time.sleep(0.2)
+          continue
+
+        proc = psutil.Process(self.pid)
+        cpu = 0
+        l = []
+        for x in xrange(20):
+          tmp = int(proc.cpu_percent(interval=0.1))
+          cpu += tmp
+          l.append(tmp)
+
+        if cpu is not None and (cpu <= 100 or l.count(0) > 10):
+          log("CPU at 0%, killing")
+          self.cpu_killed = True
+          self.do_kill()
+          break
+        else:
+          time.sleep(0.2)
+      except psutil.NoSuchProcess:
+        break
+
+  def do_kill(self):
+    self.process.terminate()
+    self.process.terminate()
+    self.process.kill()
+    self.process.wait()
+
   def run(self, timeout=60, get_output=False):
     def target():
       debug('Thread started')
@@ -83,11 +122,13 @@ class TimeoutCommand(object):
       if get_output:
         self.process = subprocess.Popen(line, stdout=subprocess.PIPE,\
                                       stderr=subprocess.PIPE, shell=shell)
+        self.pid = self.process.pid
         out, err = self.process.communicate()
         self.stdout = out[:8192]
         self.stderr = err[:8192]
       else:
         self.process = subprocess.Popen(line, shell=shell)
+        self.pid = self.process.pid
         self.process.communicate()
 
       debug('Thread finished')
@@ -95,14 +136,17 @@ class TimeoutCommand(object):
     thread = threading.Thread(target=target)
     thread.start()
 
-    thread.join(timeout)
+    if str(timeout).lower() == "auto":
+      self.thread = threading.Thread(target=self.check_cpu)
+      self.thread.start()
+      thread.join(self.default_timeout)
+    else:
+      thread.join(timeout)
+
     if thread.is_alive():
-      log('Terminating process after timeout (%d)' % timeout)
+      log('Terminating process after timeout (%s)' % str(timeout))
       try:
-        self.process.terminate()
-        self.process.terminate()
-        self.process.kill()
-        self.process.wait()
+        self.do_kill()
       except:
         log("Error killing process: %s" % str(sys.exc_info()[1]))
 

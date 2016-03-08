@@ -178,8 +178,10 @@ class CGenericMinimizer:
       self.timeout = parser.get(self.section, 'minimize-timeout')
     except:
       # Default timeout is 90 seconds
-      self.timeout = 90    
-    self.timeout = int(self.timeout)
+      self.timeout = 90
+    
+    if self.timeout.lower() != "auto":
+      self.timeout = int(self.timeout)
 
     try:
       environment = parser.get(self.section, 'environment')
@@ -468,7 +470,7 @@ class CLineMinimizer(CGenericMinimizer):
               os.system(self.pre_command)
 
           if self.command.find("@@") == -1:
-            cmd = "%s %s" % (cmd, temp_file)
+            cmd = "%s %s" % (self.command, temp_file)
           else:
             cmd = self.command.replace("@@", temp_file)
           ret = self.execute_command(cmd, self.timeout)

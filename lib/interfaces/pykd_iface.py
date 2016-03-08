@@ -95,7 +95,7 @@ class CWinDbgInterface(object):
     self.do_stop = False
     self.timer = None
 
-    if timeout == "Auto":
+    if timeout.lower() == "auto":
       self.timeout = timeout
     else:
       self.timeout = int(timeout)
