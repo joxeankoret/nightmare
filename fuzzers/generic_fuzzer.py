@@ -25,10 +25,10 @@ from nfp_queue import get_queue
 from nfp_process import process_manager
 
 try:
-  from lib.interfaces import vtrace_iface, gdb_iface, pykd_iface
+  from lib.interfaces import vtrace_iface, gdb_iface, asan_iface, pykd_iface
   has_pykd = True
 except ImportError:
-  from lib.interfaces import vtrace_iface, gdb_iface
+  from lib.interfaces import vtrace_iface, gdb_iface, asan_iface
   has_pykd = False
 
 #-----------------------------------------------------------------------
@@ -145,11 +145,21 @@ class CGenericFuzzer:
         self.iface = pykd_iface
       elif self.debugging_interface == "gdb":
         self.iface = gdb_iface
+      elif self.debugging_interface == "asan":
+        self.iface = asan_iface
       else:
         self.iface = vtrace_iface
     except:
       self.debugging_interface = None
       self.iface = vtrace_iface
+
+    try:
+      self.asan_symbolizer_path = parser.get(self.section, 'asan-symbolizer-path')
+    except:
+      if self.debugging_interface == "asan":
+        raise Exception("No asan-symbolizer-path specified in the configuration file for section %s" % self.section)
+
+      self.asan_symbolizer_path = None
 
   def launch_debugger(self, timeout, command, filename):
     if command.find("@@") > -1:
@@ -160,7 +170,10 @@ class CGenericFuzzer:
     log("Launching debugger with command %s" % " ".join(cmd))
     if not has_pykd or self.iface != pykd_iface:
       self.iface.timeout = int(timeout)
-      crash = self.iface.main(" ".join(cmd))
+      if self.debugging_interface == "asan":
+        crash = self.iface.main(asan_symbolizer_path=self.asan_symbolizer_path, args=cmd)
+      else:
+        crash = self.iface.main(" ".join(cmd))
     else:
       reload(pykd_iface)
       crash = pykd_iface.main(cmd, self.timeout, mode=self.mode, windbg_path=self.windbg_path, exploitable_path=self.exploitable_path)

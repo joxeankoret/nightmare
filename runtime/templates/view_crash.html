@@ -65,7 +65,7 @@ $def with(project_name, crash_data, str, map, repr, b64, sorted, type, hexor)
     <td>
     <pre>
     $for reg in crash_data["additional"]["registers"]:
-      $if reg.startswith("r") or reg == "eflags" or reg.startswith("e"):
+      $if reg.startswith("r") or reg == "eflags" or reg.startswith("e") or len(crash_data["additional"]["registers"]) < 8:
         $if crash_data["additional"].has_key("registers memory") and crash_data["additional"]["registers memory"].get(reg) is not None:
           $str(reg.ljust(5)): $str("%08x"%crash_data["additional"]["registers"][reg]) $repr(b64(str(crash_data["additional"]["registers memory"].get(reg))))
         $else:
@@ -107,6 +107,14 @@ $def with(project_name, crash_data, str, map, repr, b64, sorted, type, hexor)
       </pre>
     </td>
   </tr>
+  $if "information" in crash_data["additional"]:
+    <tr>
+      <th valign="top" align="left">Other Information</th>
+      <td>
+        $for info in crash_data["additional"]["information"]:
+          $crash_data["additional"]["information"][info] <br/>
+      </td>
+    </tr>
   $if "threads" in crash_data["additional"]:
     <tr>
       <th valign="top" align="left">Threads</th>
