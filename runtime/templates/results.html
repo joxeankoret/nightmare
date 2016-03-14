@@ -1,4 +1,4 @@
-$def with (crashes, show_all, field, field_value, no_field="", no_field_value="", hide_dups=False)
+$def with (crashes, show_all, field, field_value, no_field="", no_field_value="", sort_value="", hide_dups=False)
 <html>
 <head>
 <link href="/static/nightmare.css" rel="stylesheet" type="text/css">
@@ -22,6 +22,16 @@ function filters() {
     var options = idSelect.options;
     for ( i = 0; i < options.length; i++ ) {
       if ( options[i].value == selected )
+        options[i].selected = "true";
+    }
+  }
+  
+  var sortValue = document.getElementById("idSavedSort").value;
+  if ( sortValue != "" ) {
+    var sortSelect = document.getElementById("idSortSelect");
+    var options = sortSelect.options;
+    for ( i = 0; i < options.length; i++ ) {
+      if ( options[i].value == sortValue )
         options[i].selected = "true";
     }
   }
@@ -89,6 +99,20 @@ function filters() {
     $ dups = ""
   <input type="checkbox" name="hideDup" id="hideDup" $dups/>
   <label for"hideDup">Hide duplicates</label>
+  
+  <br/>
+  
+  <label><b class="label">Sort</b> results matching field</label>
+  <input type="hidden" id="idSavedSort" value="$sort_value">
+  <select name="sortValue" id="idSortSelect">
+    <option value="crash_signal">Signal</option>
+    <option value="exploitability">Exploitable</option>
+    <option value="date">Date</option>
+    <option value="disassembly">Disassembly</option>
+    <option value="program_counter">Program counter</option>
+  </select>
+  
+  
 </form>
 <table border="0">
   $if len(crashes) > 0:
@@ -119,7 +143,7 @@ function filters() {
                 $ dups = "on"
               $else:
                 $ dups = ""
-              $left crash(es) hidden... <a href="?show_all=1&field=$field&fieldValue=$field_value&no_field=$no_field&no_fieldValue=$no_field_value&hideDup=$dups">Show all crashes</a>.
+              $left crash(es) hidden... <a href="?show_all=1&field=$field&fieldValue=$field_value&no_field=$no_field&no_fieldValue=$no_field_value&sortValue=$sort_value&hideDup=$dups">Show all crashes</a>.
             </td>
           </tr>
           $break
