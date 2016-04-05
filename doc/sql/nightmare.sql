@@ -242,7 +242,7 @@ CREATE TABLE `triggers` (
   `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `enabled` tinyint(1) DEFAULT '1',
   PRIMARY KEY (`trigger_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
 -- Dumping data for table `config`

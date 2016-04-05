@@ -52,7 +52,7 @@ Nightmare 0.0.4
    
     https://ouspg.googlecode.com/files/radamsa-0.3.tar.gz
    
-   The following (optional) packages can be instaled:
+   The following (optional) packages can be installed:
 
     DynamoRIO
     Zzuf
