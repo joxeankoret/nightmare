@@ -99,7 +99,7 @@ class TimeoutCommand(object):
           self.do_kill()
           break
         else:
-          time.sleep(0.2)
+          time.sleep(0.5)
       except psutil.NoSuchProcess:
         break
 

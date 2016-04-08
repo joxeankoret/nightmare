@@ -39,6 +39,7 @@ $def with (rows, show_all)
     <th>Max. iterations</th>
     <th>Enabled</th>
     <th>Archived</th>
+    <th>Ignore duplicates?</th>
     <th>Start date</th>
   </tr>
   $ i = 0
@@ -46,7 +47,7 @@ $def with (rows, show_all)
     $if show_all == 0 and i == 10:
       $ left = len(rows) - i
         <tr>
-          <td colspan="10" align="center">
+          <td colspan="11" align="center">
             $left project(s) hidden... <a href="?show_all=1">Show all projects</a>.
           </td>
         </tr>
@@ -74,6 +75,12 @@ $def with (rows, show_all)
         Yes
       $else:
         No
+      </td>
+      <td>
+        $if row.ignore_duplicates == 1:
+          Yes
+        $else:
+          No
       </td>
       <td>$row.date</td>
     </tr>
@@ -114,6 +121,11 @@ $def with (rows, show_all)
     <td><label for="max_iteration">Maximum iteration</label></td>
     <td><input type="number" name="max_iteration" value="1000000"></td>
     <td><i>Maximum number of iterations per project. No more samples will be generated when the number of maximum iterations (without crashes) is reached.</i></td>
+   </tr>
+   <tr>
+    <td><label for="ignore_duplicates">Ignore duplicates</label></td>
+    <td><input type="checkbox" name="ignore_duplicates" checked></td>
+    <td><i>Ignore duplicated crashes? The generated "crash hash" is used to determine if is a duplicate or not.</i></td>
    </tr>
    <tr>
      <td colspan="2"><input type="submit" value="Add new project"></td>

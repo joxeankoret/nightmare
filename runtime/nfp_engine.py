@@ -212,6 +212,50 @@ class CSamplesGenerator:
         log("Error removing temporary file: %s" % str(sys.exc_info()[1]))
       job.delete()
 
+  def calculate_crash_hash(self, data):
+    crash_hash = []
+    if "additional" in data:
+      if "stack trace" in data["additional"]:
+        st = data["additional"]["stack trace"]
+        last = max(map(int, st.keys()))
+
+        # First element in the crash hash contains the last 3 nibbles
+        # of the $PC.
+        tmp = hex(data["pc"])
+        crash_hash = [tmp[len(tmp)-3:]]
+
+        # Next elements, will be the last 3 nibbles of each address in
+        # the stack trace until, at much, 15 elements.
+        for i in range(0, min(last, 15)):
+          tmp = hex(st[str(i)][0])
+          crash_hash.append(tmp[len(tmp)-3:])
+
+    return "".join(crash_hash)
+
+  def should_ignore_duplicates(self, project_id):
+    what = "1"
+    vars = {"project_id":project_id}
+    where = "project_id = $project_id and ignore_duplicates = 1"
+    res = self.db.select("projects", what=what, where=where, vars=vars)
+    res = list(res)
+    return len(res) > 0
+
+  def crash_exists(self, project_id, crash_hash):
+    what = "1"
+    vars = {"project_id":project_id, "crash_hash":crash_hash}
+    where = "project_id = $project_id and crash_hash = $crash_hash "
+    where += " and crash_hash is not null and crash_hash != ''"
+    where += " and length(crash_hash) >= 30"
+    res = self.db.select("crashes", what=what, where=where, vars=vars)
+    res = list(res)
+    return len(res) > 0
+
+  def should_store_crash(self, project_id, crash_hash):
+    if self.should_ignore_duplicates(project_id) and \
+       self.crash_exists(project_id, crash_hash):
+      return False
+    return True
+
   def insert_crash(self, project_id, temp_file, data):
     crash_path = os.path.join(self.config["SAMPLES_PATH"], "crashes")
     if not os.path.exists(temp_file):
@@ -237,19 +281,25 @@ class CSamplesGenerator:
       row = res[0]
       total = row.cnt
 
-      log("Inserting crash $PC 0x%08x Signal %s Exploitability %s" % (data["pc"], data["signal"], data["exploitable"]))
+      crash_hash = self.calculate_crash_hash(data)
+      log("Inserting crash $PC 0x%08x Signal %s Exploitability %s Hash %s" % (data["pc"], data["signal"], data["exploitable"], crash_hash))
       if data["disasm"] is not None:
         disasm = "%08x %s" % (data["disasm"][0], data["disasm"][1])
       else:
         disasm = "None"
 
       additional_info = json.dumps(data["additional"])
-      self.db.insert("crashes", project_id=project_id, sample_id=sample_id,
-                     program_counter=data["pc"], crash_signal=data["signal"],
-                     exploitability=data["exploitable"],
-                     disassembly=disasm, total_samples=total, 
-                     additional = str(additional_info))
-      
+      if self.should_store_crash(project_id, crash_hash):
+        self.db.insert("crashes", project_id=project_id, sample_id=sample_id,
+                       program_counter=data["pc"], crash_signal=data["signal"],
+                       exploitability=data["exploitable"],
+                       disassembly=disasm, total_samples=total, 
+                       additional = str(additional_info),
+                       crash_hash = crash_hash)
+        log("Crash stored")
+      else:
+        log("Ignoring already existing crash with hash %s" % crash_hash)
+
       self.reset_iteration(project_id)
 
   def reset_iteration(self, project_id):

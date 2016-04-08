@@ -258,7 +258,8 @@ class add_project:
       return render.login(f)
     
     i = web.input(name="", description="", subfolder="", tube_prefix="",
-                  max_files=100, max_iteration=1000000)
+                  max_files=100, max_iteration=1000000,
+                  ignore_duplicates=0)
     if i.name == "":
       return render.error("No project name specified")
     elif i.description == "":
@@ -266,13 +267,19 @@ class add_project:
     elif i.tube_prefix == "":
       return render.error("Invalid tube prefix")
     
+    if i.ignore_duplicates == "on":
+      ignore_duplicates = 1
+    else:
+      ignore_duplicates = 0
+
     db = init_web_db()
     with db.transaction():
       db.insert("projects", name=i.name, description=i.description,
               subfolder=i.subfolder, tube_prefix=i.tube_prefix, 
               maximum_samples=i.max_files, archived=0,
               maximum_iteration=i.max_iteration,
-              date=web.SQLLiteral("CURRENT_DATE"))
+              date=web.SQLLiteral("CURRENT_DATE"),
+              ignore_duplicates=ignore_duplicates)
 
     return web.redirect("/projects")
 
@@ -283,7 +290,8 @@ class edit_project:
       f = register_form()
       return render.login(f)
     i = web.input(id=-1, name="", description="", subfolder="",
-                  tube_prefix="", enabled="", archived="")
+                  tube_prefix="", enabled="", archived="",
+                  ignore_duplicates=0)
     if i.id == -1:
       return render.error("Invalid project identifier")
     elif i.name == "":
@@ -303,6 +311,11 @@ class edit_project:
     else:
       archived = 0
 
+    if i.ignore_duplicates == "on":
+      ignore_duplicates = 1
+    else:
+      ignore_duplicates = 0
+
     db = init_web_db()
     with db.transaction():
       enabled = i.enabled == "on"
@@ -312,6 +325,7 @@ class edit_project:
                 maximum_samples=i.max_files, enabled=enabled,
                 maximum_iteration=i.max_iteration,
                 archived=archived, where="project_id = $project_id",
+                ignore_duplicates=ignore_duplicates,
                 vars={"project_id":i.id})
     return web.redirect("/projects")
   
@@ -326,7 +340,7 @@ class edit_project:
     db = init_web_db()
     what = """project_id, name, description, subfolder, tube_prefix,
               maximum_samples, enabled, date, archived,
-              maximum_iteration """
+              maximum_iteration, ignore_duplicates """
     where = "project_id = $project_id"
     vars = {"project_id":i.id}
     res = db.select("projects", what=what, where=where, vars=vars)
@@ -706,6 +720,7 @@ def render_crash(crash_id):
   crash_data["disassembly"] = crash_row.disassembly
   crash_data["date"] = crash_row.date
   crash_data["total_samples"] = crash_row.total_samples
+  crash_data["crash_hash"] = crash_row.crash_hash
 
   additional = json.loads(crash_row.additional)
   crash_data["additional"] = additional

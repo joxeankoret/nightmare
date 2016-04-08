@@ -69,6 +69,7 @@ CREATE TABLE `crashes` (
   `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `total_samples` int(11) NOT NULL,
   `additional` mediumtext,
+  `crash_hash` varchar(48),
   PRIMARY KEY (`crash_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=826 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -149,6 +150,7 @@ CREATE TABLE `projects` (
   `maximum_iteration` int(11) NOT NULL DEFAULT '1000000',
   `enabled` tinyint(1) DEFAULT '1',
   `archived` tinyint(1) DEFAULT '1',
+  `ignore_duplicates` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`project_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;

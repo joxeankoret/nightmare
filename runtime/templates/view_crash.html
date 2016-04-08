@@ -52,6 +52,10 @@ $def with(project_name, crash_data, str, map, repr, b64, sorted, type, hexor)
     <td>$hex(int(crash_data["program_counter"]))</td>
   </tr>
   <tr>
+    <th align="left">Crash hash</th>
+    <td>$crash_data["crash_hash"]</td>
+  </tr>
+  <tr>
     <th align="left">Crash instruction</th>
     <td>$crash_data["disassembly"]</td>
   </tr>

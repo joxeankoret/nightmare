@@ -57,6 +57,14 @@ $def with(row)
     <td><i>Is the project archived? Archived projects are not visible in "Project Engines".</i></td> 
    </tr>
    <tr>
+    <td><label for="enabled">Ignore duplicates?</label></td>
+    $if row.ignore_duplicates == 1:
+      <td><input type="checkbox" name="ignore_duplicates" checked></td>
+    $else:
+      <td><input type="checkbox" name="ignore_duplicates"></td>
+    <td><i>Ignore duplicated crashes? The generated "crash hash" is used to determine if is a duplicate or not.</i></td> 
+   </tr>
+   <tr>
     <td>Start date</td>
     <td>$row.date</td>
     <td><i>Date when the project was created.</i></td>
