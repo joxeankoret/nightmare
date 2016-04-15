@@ -154,6 +154,11 @@ def main(args):
       # Schedule a timer to kill the process after 5 seconds
       timer = threading.Timer(timeout, kill_process, (tr, True, ))
       timer.start()
+
+    cmd = args
+    if type(args) is list:
+      cmd = " ".join(args)
+
     tr.execute(" ".join(args))
     tr.run()
 
