@@ -265,23 +265,26 @@ class CSamplesGenerator:
     file_hash = sha1(buf).hexdigest()
     new_path = os.path.join(crash_path, file_hash)
 
-    log("Saving test file %s" % new_path)
-    shutil.move(temp_file, new_path)
+    sample_id = self.db.insert("samples", sample_hash=file_hash)
 
-    if os.path.exists(temp_file + ".diff"):
-      shutil.move(temp_file + ".diff", new_path + ".diff")
+    what = "count(*) cnt"
+    vars = {"id":project_id}
+    where = "project_id=$id"
+    res = self.db.select("statistics", what=what, where=where, vars=vars)
+    row = res[0]
+    total = row.cnt
+
+    crash_hash = self.calculate_crash_hash(data)
+    store_crash = self.should_store_crash(project_id, crash_hash)
+
+    if store_crash:
+      log("Saving test file %s" % new_path)
+      shutil.move(temp_file, new_path)
+
+      if os.path.exists(temp_file + ".diff"):
+        shutil.move(temp_file + ".diff", new_path + ".diff")
 
     with self.db.transaction():
-      sample_id = self.db.insert("samples", sample_hash=file_hash)
-
-      what = "count(*) cnt"
-      vars = {"id":project_id}
-      where = "project_id=$id"
-      res = self.db.select("statistics", what=what, where=where, vars=vars)
-      row = res[0]
-      total = row.cnt
-
-      crash_hash = self.calculate_crash_hash(data)
       log("Inserting crash $PC 0x%08x Signal %s Exploitability %s Hash %s" % (data["pc"], data["signal"], data["exploitable"], crash_hash))
       if data["disasm"] is not None:
         disasm = "%08x %s" % (data["disasm"][0], data["disasm"][1])
@@ -289,7 +292,7 @@ class CSamplesGenerator:
         disasm = "None"
 
       additional_info = json.dumps(data["additional"])
-      if self.should_store_crash(project_id, crash_hash):
+      if store_crash:
         self.db.insert("crashes", project_id=project_id, sample_id=sample_id,
                        program_counter=data["pc"], crash_signal=data["signal"],
                        exploitability=data["exploitable"],
