@@ -277,7 +277,7 @@ class CSamplesGenerator:
     crash_hash = self.calculate_crash_hash(data)
     store_crash = self.should_store_crash(project_id, crash_hash)
 
-    if store_crash:
+    if store_crash or data["exploitable"] == "EXPLOITABLE":
       log("Saving test file %s" % new_path)
       shutil.move(temp_file, new_path)
 
