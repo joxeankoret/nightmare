@@ -275,9 +275,9 @@ class CSamplesGenerator:
     total = row.cnt
 
     crash_hash = self.calculate_crash_hash(data)
-    store_crash = self.should_store_crash(project_id, crash_hash)
+    store_crash = self.should_store_crash(project_id, crash_hash) or data["exploitable"] == "EXPLOITABLE"
 
-    if store_crash or data["exploitable"] == "EXPLOITABLE":
+    if store_crash:
       log("Saving test file %s" % new_path)
       shutil.move(temp_file, new_path)
 
