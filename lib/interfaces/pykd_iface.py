@@ -319,6 +319,10 @@ class CWinDbgInterface(object):
       print pykd.dbgCommand("k 10")
       print pykd.dbgCommand("r")
       print exploitable
+      try:
+        pykd.killAllProcesses()
+      except:
+        log("Error killing processes: " + str(sys.exc_info()[1]))
 
       crash_data_buf = self.crash_data.dump_json()
       ret = self.crash_data.dump_dict()

@@ -288,7 +288,7 @@ class CGDBInterface(object):
 
         crash_data.add_data("disassembly", int(self.pc), self.disasm)
         for dis in self.disasm_around:
-          if type(dis[0]) is int or dis[0].isdigit():
+          if type(dis[0]) in (int,long) or dis[0].isdigit():
             crash_data.add_data("disassembly", dis[0], dis[1])
         crash_data.disasm = [self.pc, self.disasm]
         
