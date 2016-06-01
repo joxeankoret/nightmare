@@ -173,7 +173,7 @@ class CGenericFuzzer:
       if self.debugging_interface == "asan":
         crash = self.iface.main(asan_symbolizer_path=self.asan_symbolizer_path, args=cmd)
       else:
-        crash = self.iface.main(" ".join(cmd))
+        crash = self.iface.main(cmd)
     else:
       reload(pykd_iface)
       crash = pykd_iface.main(cmd, self.timeout, mode=self.mode, windbg_path=self.windbg_path, exploitable_path=self.exploitable_path)

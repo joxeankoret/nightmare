@@ -225,9 +225,13 @@ class CSamplesGenerator:
         crash_hash = [tmp[len(tmp)-3:]]
 
         # Next elements, will be the last 3 nibbles of each address in
-        # the stack trace until, at much, 15 elements.
-        for i in range(0, min(last, 15)):
-          tmp = hex(st[str(i)][0])
+        # the stack trace until, at much, 13 elements.
+        for i in range(0, min(last, 13)):
+          try:
+            tmp = hex(st[str(i)][0])
+          except:
+            print "calculate_crash_hash: %s: %s" % (str(sys.exc_info()[1]), st)
+            tmp = "???"
           crash_hash.append(tmp[len(tmp)-3:])
 
     return "".join(crash_hash)
@@ -301,7 +305,8 @@ class CSamplesGenerator:
                        crash_hash = crash_hash)
         log("Crash stored")
       else:
-        log("Ignoring already existing crash with hash %s" % crash_hash)
+        log("Ignoring and removing already existing crash with hash %s" % crash_hash)
+        os.remove(temp_file)
 
       self.reset_iteration(project_id)
 
