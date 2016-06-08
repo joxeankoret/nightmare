@@ -10,6 +10,7 @@ import os
 import sys
 import time
 import json
+import zlib
 import base64
 import random
 import shutil
@@ -261,10 +262,25 @@ class CSamplesGenerator:
     return True
 
   def insert_crash(self, project_id, temp_file, data):
+    has_file = "has_file" in data
     crash_path = os.path.join(self.config["SAMPLES_PATH"], "crashes")
-    if not os.path.exists(temp_file):
+    if not os.path.exists(temp_file) and not has_file:
       log("Test case file %s does not exists!!!!" % temp_file)
       return False
+    elif has_file:
+      # There is no file path but, rather, a whole zlib compressed file
+      # encoded in base64 so, create a temporary file and write to it
+      # the decoded base64 and decompressed zlib stream of data.
+      buf = temp_file
+      temp_file = tempfile.mktemp(dir=self.config["TEMPORARY_PATH"])
+
+      try:
+        with open(temp_file, "wb") as f:
+          f.write(zlib.decompress(base64.b64decode(buf)))
+      except:
+        os.remove(temp_file)
+        raise
+
     buf = open(temp_file, "rb").read()
     file_hash = sha1(buf).hexdigest()
     new_path = os.path.join(crash_path, file_hash)
