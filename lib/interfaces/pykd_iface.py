@@ -25,6 +25,11 @@ sys.path.append(os.path.join(dir_name, "../../runtime"))
 from nfp_log import log
 from crash_data import CCrashData
 
+#-------------------------------------------------------------------------------
+PYKD2 = 'pykd_0_2_x'  
+PYKD3 = 'pykd_0_3_x'  
+
+#-------------------------------------------------------------------------------
 class ExceptionHandler(pykd.eventHandler):
   def __init__(self):
     pykd.eventHandler.__init__(self)
@@ -76,6 +81,7 @@ class CWinDbgInterface(object):
     self.exploitable_path = None
     self.windbg_path = windbg_path
     self.exploitable_path = exploitable_path
+
     try:
       self.handler = ExceptionHandler()
     except:
@@ -95,10 +101,12 @@ class CWinDbgInterface(object):
     self.do_stop = False
     self.timer = None
 
-    if timeout.lower() == "auto":
+    if str(timeout).lower() == "auto":
       self.timeout = timeout
     else:
       self.timeout = int(timeout)
+    
+    self.pykd_version = self.get_pykd_version()
 
   def resolve_windbg_path(self):
     try:
@@ -232,21 +240,58 @@ class CWinDbgInterface(object):
   def check_cpu(self):
     while True:
       try:
+        if self.pid is None:
+          time.sleep(0.2)
+          continue
+
         proc = psutil.Process(self.pid)
-        cpu = all(0 == proc.cpu_percent(interval=0.1) for x in xrange(20))
-        if cpu is not None and cpu is True:
+        cpu = 0
+        l = []
+        for x in xrange(20):
+          tmp = int(proc.cpu_percent(interval=0.1))
+          cpu += tmp
+          l.append(tmp)
+
+        if cpu is not None and (cpu <= 100 or l.count(0) > 10):
+          log("CPU at 0%, killing")
           self.do_stop = True
           pykd.breakin()
           break
         else:
-          time.sleep(0.2)
+          time.sleep(0.5)
       except psutil.NoSuchProcess:
         self.do_stop = True
+        break
+
+  def get_pykd_version(self):
+    """  
+    Gets the pykd version number 2 or 3.
+    Returns: pykd version number
+    """
+    version = pykd.version  
+    version_number = int(version.replace(',', '.').replace(' ', '').split('.')[1])  
+    if version_number == 3:  
+      return PYKD3
+    elif version_number == 2:  
+      return PYKD2
+    return None
+
+  def get_pid(self):
+    if self.pykd_version == PYKD3:
+      return pykd.getProcessSystemID()
+    return pykd.getCurrentProcessId()
+
+  def start_process(self):
+    if self.pykd_version == PYKD2:
+      self.id = pykd.startProcess(self.program, debugChildren=True)
+    else:
+      self.id = pykd.startProcess(self.program, pykd.ProcessDebugOptions.DebugChildren)
+    return self.id
 
   def run(self):
     self.do_stop = False
-    self.id = pykd.startProcess(self.program, debugChildren=True)
-    self.pid = pykd.getProcessSystemID(self.id)
+    self.id = self.start_process()
+    self.pid = self.get_pid()
     if self.handler is None:
       self.handler = ExceptionHandler()
 
