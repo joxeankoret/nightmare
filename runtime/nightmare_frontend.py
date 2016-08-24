@@ -632,9 +632,9 @@ class results:
       if i.no_field not in valid_fields:
         return render.error("Invalid field %s" % i.no_field)
     
-      sql += " ORDER BY %s DESC" % (i.sortValue)
+      sql += " ORDER BY c.%s DESC" % (i.sortValue)
     else:
-      sql += " ORDER BY date DESC"
+      sql += " ORDER BY c.date DESC"
       
     res = db.query(sql)
     results = {}
