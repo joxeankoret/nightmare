@@ -26,8 +26,8 @@ from nfp_log import log
 from crash_data import CCrashData
 
 #-------------------------------------------------------------------------------
-PYKD2 = 'pykd_0_2_x'  
-PYKD3 = 'pykd_0_3_x'  
+PYKD2 = 'pykd_0_2_x'
+PYKD3 = 'pykd_0_3_x'
 
 #-------------------------------------------------------------------------------
 class ExceptionHandler(pykd.eventHandler):
@@ -48,10 +48,15 @@ class ExceptionHandler(pykd.eventHandler):
     self.crash_data = None
 
   def is_first_chance(self, exceptInfo):
+    exc_code = self.get_exception_code(exceptInfo)
+    if exc_code in self.interesting_exceptions.keys():
+      return False
+
     if 'FirstChance' in dir(exceptInfo):
-      return exceptInfo.FirstChance
+      ret = exceptInfo.FirstChance
     else:
-      return exceptInfo.firstChance
+      ret = exceptInfo.firstChance
+    return ret
 
   def get_exception_code(self, ei):
     if 'ExceptionCode' in dir(ei):
@@ -75,6 +80,7 @@ class ExceptionHandler(pykd.eventHandler):
 #-------------------------------------------------------------------------------
 class CWinDbgInterface(object):
   def __init__(self, program, timeout, mode=32, windbg_path=None, exploitable_path=None):
+    reload(pykd)
     self.id = None
     self.mode = mode
     self.program = program
@@ -164,7 +170,10 @@ class CWinDbgInterface(object):
     lines = regs.split("\n")
     last_line = lines[len(lines)-2]
     dis = re.findall("[a-z0-9]{1,} [a-z0-9]{2,} (.*)", last_line)
-    self.disasm = dis[0].strip(" ")
+    self.disasm = None
+    if dis is not None and len(dis) > 0:
+      self.disasm = dis[0].strip(" ")
+
     # ...and add it to the CCrashData object
     self.crash_data.disasm = [self.pc, self.disasm]
 
@@ -190,15 +199,18 @@ class CWinDbgInterface(object):
         i += 1
 
   def disasm_around(self):
-    lines = pykd.dbgCommand("u %s-c L12" % self.pc_register)
-    for line in lines.split("\n"):
-      tmp = re.findall("([a-f0-9]{1,}) ([a-f0-9]{2,}) (.*)", line)
-      if len(tmp) > 0:
-        line = tmp[0]
+    try:
+      lines = pykd.dbgCommand("u %s-c L12" % self.pc_register)
+      for line in lines.split("\n"):
+        tmp = re.findall("([a-f0-9]{1,}) ([a-f0-9]{2,}) (.*)", line)
+        if len(tmp) > 0:
+          line = tmp[0]
 
-        addr = line[0]
-        dis = line[2]
-        self.crash_data.add_data("disassembly", int(addr, 16), dis)
+          addr = line[0]
+          dis = line[2]
+          self.crash_data.add_data("disassembly", int(addr, 16), dis)
+    except:
+      log("Error in disasm_around: %s" % str(sys.exc_info()[1]))
 
   def create_crash_data(self, regs, stack, exploitable):
     regs = regs.replace("`", "")
@@ -245,6 +257,9 @@ class CWinDbgInterface(object):
           continue
 
         proc = psutil.Process(self.pid)
+        if proc is None:
+          break
+
         cpu = 0
         l = []
         for x in xrange(20):
@@ -282,7 +297,7 @@ class CWinDbgInterface(object):
     return pykd.getCurrentProcessId()
 
   def start_process(self):
-    if self.pykd_version == PYKD2:
+    if not "ProcessDebugOptions" in dir(pykd):
       self.id = pykd.startProcess(self.program, debugChildren=True)
     else:
       self.id = pykd.startProcess(self.program, pykd.ProcessDebugOptions.DebugChildren)
@@ -290,8 +305,13 @@ class CWinDbgInterface(object):
 
   def run(self):
     self.do_stop = False
-    self.id = self.start_process()
-    self.pid = self.get_pid()
+    try:
+      self.id = self.start_process()
+      self.pid = self.get_pid()
+    except:
+      log("Error launching process! %s" % str(sys.exc_info()[1]))
+      return None
+
     if self.handler is None:
       self.handler = ExceptionHandler()
 
@@ -321,12 +341,18 @@ class CWinDbgInterface(object):
 
     ret = None
     if self.handler.exception_occurred:
+      try:
+        pykd.breakin()
+        pykd.breakin()
+      except:
+        pass
+
       tmp = pykd.dbgCommand("k 1")
       if tmp.find("Wow64NotifyDebugger") > -1:
         pykd.dbgCommand(".effmach x86")
 
-      stack_trace = pykd.dbgCommand("k")
       registers = pykd.dbgCommand("r")
+      stack_trace = pykd.dbgCommand("k")
 
       exploitable = None
       msec_path = None
