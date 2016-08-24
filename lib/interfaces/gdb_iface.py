@@ -270,7 +270,7 @@ class CGDBInterface(object):
       print "Running %s" % cmd
 
       cmd_obj = TimeoutCommand(cmd)
-      #cmd_obj.shell = True
+      cmd_obj.shell = True
       cmd_obj.run(self.timeout)
       
       buf = open(logfile, "rb").readlines()

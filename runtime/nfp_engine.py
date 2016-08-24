@@ -116,7 +116,6 @@ class CSamplesGenerator:
 
     filename = self.read_random_file(subfolder)
     debug("Random template file %s" % filename)
-    
     cmd, temp_file = self.get_command(command, filename, subfolder)
     log("Generating mutated file %s" % temp_file)
     debug("*** Command: %s" % cmd)
@@ -138,6 +137,7 @@ class CSamplesGenerator:
         os.remove(temp_file)
       except:
         pass
+
       if os.path.exists("%s.diff" % temp_file):
         log("Removing temporary diff file %s" % temp_file)
         os.remove("%s.diff" % temp_file)
@@ -187,7 +187,7 @@ class CSamplesGenerator:
     value = q.stats_tube(tube_name)["current-jobs-ready"]
     debug("Total of %d job(s) in queue" % value)
     return value > maximum-1
-  
+
   def get_pending_elements(self, prefix, maximum):
     tube_name = "%s-samples" % prefix
     q = get_queue(watch=True, name=tube_name)
@@ -295,7 +295,7 @@ class CSamplesGenerator:
     total = row.cnt
 
     crash_hash = self.calculate_crash_hash(data)
-    store_crash = self.should_store_crash(project_id, crash_hash) or data["exploitable"] == "EXPLOITABLE"
+    store_crash = self.should_store_crash(project_id, crash_hash)
 
     if store_crash:
       log("Saving test file %s" % new_path)
