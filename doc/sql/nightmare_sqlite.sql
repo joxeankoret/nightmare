@@ -20,7 +20,7 @@ CREATE TABLE `crashes` (
   `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `total_samples` int(11) NOT NULL,
   `additional` mediumtext,
-  `crash_hash` varchar(48),
+  `crash_hash` varchar(48)
 );
 CREATE TABLE `diffs` (
   `diff_id` INTEGER PRIMARY KEY AUTOINCREMENT,
