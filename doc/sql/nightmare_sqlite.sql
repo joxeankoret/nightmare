@@ -67,7 +67,7 @@ CREATE TABLE `projects` (
   `maximum_iteration` int(11) NOT NULL DEFAULT '1000000',
   `enabled` tinyint(1) DEFAULT '1',
   `archived` tinyint(1) DEFAULT '1',
-  `ignore_duplicates` tinyint(1) DEFAULT '0',
+  `ignore_duplicates` tinyint(1) DEFAULT '0'
 );
 CREATE TABLE `samples` (
   `sample_id` INTEGER PRIMARY KEY AUTOINCREMENT,
