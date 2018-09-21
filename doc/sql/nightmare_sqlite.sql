@@ -1,5 +1,6 @@
 PRAGMA foreign_keys=OFF;
 BEGIN TRANSACTION;
+
 CREATE TABLE `crash_data` (
   `crash_data_id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `crash_id` int(11) NOT NULL,
@@ -18,7 +19,8 @@ CREATE TABLE `crashes` (
   `disassembly` varchar(255) DEFAULT NULL,
   `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `total_samples` int(11) NOT NULL,
-  `additional` mediumtext
+  `additional` mediumtext,
+  `crash_hash` varchar(48),
 );
 CREATE TABLE `diffs` (
   `diff_id` INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,7 +66,8 @@ CREATE TABLE `projects` (
   `maximum_samples` int(11) NOT NULL DEFAULT '100',
   `maximum_iteration` int(11) NOT NULL DEFAULT '1000000',
   `enabled` tinyint(1) DEFAULT '1',
-  `archived` tinyint(1) DEFAULT '1'
+  `archived` tinyint(1) DEFAULT '1',
+  `ignore_duplicates` tinyint(1) DEFAULT '0',
 );
 CREATE TABLE `samples` (
   `sample_id` INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -94,9 +97,20 @@ INSERT INTO "config" VALUES(9,'NIGHTMARE_PATH','/home/joxean/Documentos/research
 INSERT INTO "config" VALUES(10,'QUEUE_HOST','localhost',NULL,NULL);
 INSERT INTO "config" VALUES(11,'QUEUE_PORT','11300',NULL,NULL);
 INSERT INTO "config" VALUES(12,'TEMPORARY_PATH','/tmp',NULL,NULL);
+
+CREATE TABLE `triggers` (
+  `trigger_id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `description` varchar(300) DEFAULT NULL,
+  `command` text,
+  `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `enabled` tinyint(1) DEFAULT '1'
+);
+
 DELETE FROM sqlite_sequence;
 INSERT INTO "sqlite_sequence" VALUES('mutation_engines',11);
 INSERT INTO "sqlite_sequence" VALUES('config',11);
+
 CREATE UNIQUE INDEX `project_id` on project_engines (`project_id`,`mutation_engine_id`);
 CREATE UNIQUE INDEX idx_uq_config_name on config (`name`);
+
 COMMIT;
